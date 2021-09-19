@@ -735,82 +735,74 @@ SpecialCutBrick::SpecialCutBrick(const char* name, const char* title)
 templateClassImp(SpecialCutBrick);
 
 // Default TPC only track selection according to LHC2010
-TrackSelectionBrick* TrackSelectionBrick::getFB1LHC2010()
+void TrackSelectionBrick::constructFB1LHC2010()
 {
-  TrackSelectionBrick* trackSelector = new TrackSelectionBrick();
-  trackSelector->SetTrackType(o2::aod::track::Run2Track);
-  trackSelector->SetRequireGoldenChi2(true);
-  trackSelector->SetMinNClustersTPC(50);
-  trackSelector->SetMaxChi2PerClusterTPC(4.f);
-  trackSelector->SetMaxDcaXY(2.4f);
-  trackSelector->SetMaxDcaZ(3.2f);
+  SetTrackType(o2::aod::track::Run2Track);
+  SetRequireGoldenChi2(true);
+  SetMinNClustersTPC(50);
+  SetMaxChi2PerClusterTPC(4.f);
+  SetMaxDcaXY(2.4f);
+  SetMaxDcaZ(3.2f);
   /* TODO: 2D DCA cut */
-  return trackSelector;
 }
 
 // Default track selection requiring one hit in the SPD DCAxy according to LHC2010
-TrackSelectionBrick* TrackSelectionBrick::getFB36LHC2010()
+void TrackSelectionBrick::constructFB36LHC2010()
 {
-  TrackSelectionBrick* trackSelector = new TrackSelectionBrick();
-  trackSelector->SetTrackType(o2::aod::track::Run2Track);
-  trackSelector->SetRequireITSRefit(true);
-  trackSelector->SetRequireTPCRefit(true);
-  trackSelector->SetRequireGoldenChi2(true);
-  trackSelector->SetMinNCrossedRowsTPC(70);
-  trackSelector->SetMinNCrossedRowsOverFindableClustersTPC(0.8f);
-  trackSelector->SetMaxChi2PerClusterTPC(4.f);
-  trackSelector->SetRequireHitsInITSLayers(1, {0, 1}); // one hit in any SPD layer
-  trackSelector->SetMaxChi2PerClusterITS(36.f);
-  trackSelector->SetMaxDcaXYPtDep([](float pt) { return 0.0182f + 0.0350f / pow(pt, 1.01f); });
-  trackSelector->SetMaxDcaZ(2.f);
-  return trackSelector;
+  SetTrackType(o2::aod::track::Run2Track);
+  SetRequireITSRefit(true);
+  SetRequireTPCRefit(true);
+  SetRequireGoldenChi2(true);
+  SetMinNCrossedRowsTPC(70);
+  SetMinNCrossedRowsOverFindableClustersTPC(0.8f);
+  SetMaxChi2PerClusterTPC(4.f);
+  SetRequireHitsInITSLayers(1, {0, 1}); // one hit in any SPD layer
+  SetMaxChi2PerClusterITS(36.f);
+  SetMaxDcaXYPtDep([](float pt) { return 0.0182f + 0.0350f / pow(pt, 1.01f); });
+  SetMaxDcaZ(2.f);
 }
 
 // Default track selection requiring no hit in the SPD and one in the innermost DCAxy according to LHC2010
 // SDD -> complementary tracks to global selection
-TrackSelectionBrick* TrackSelectionBrick::getFB64LHC2010()
+void TrackSelectionBrick::constructFB64LHC2010()
 {
-  TrackSelectionBrick* trackSelector = getFB36LHC2010();
-  trackSelector->ResetITSRequirements();
-  trackSelector->SetRequireNoHitsInITSLayers({0, 1}); // no hit in SPD layers
-  trackSelector->SetRequireHitsInITSLayers(1, {2});   // one hit in first SDD layer
-  return trackSelector;
+  constructFB36LHC2010();
+  ResetITSRequirements();
+  SetRequireNoHitsInITSLayers({0, 1}); // no hit in SPD layers
+  SetRequireHitsInITSLayers(1, {2});   // one hit in first SDD layer
 }
 
 // Default TPC only track selection according to LHC2011
-TrackSelectionBrick* TrackSelectionBrick::getFB1LHC2011()
+void TrackSelectionBrick::constructFB1LHC2011()
 {
   /* the same as for LHC2010 */
-  return getFB1LHC2010();
+  constructFB1LHC2010();
 }
 
 // Default track selection requiring one hit in the SPD DCAxy according to LHC2011
-TrackSelectionBrick* TrackSelectionBrick::getFB36LHC2011()
+void TrackSelectionBrick::constructFB36LHC2011()
 {
-  TrackSelectionBrick* trackSelector = new TrackSelectionBrick();
-  trackSelector->SetTrackType(o2::aod::track::Run2Track);
-  trackSelector->SetRequireITSRefit(true);
-  trackSelector->SetRequireTPCRefit(true);
-  trackSelector->SetRequireGoldenChi2(true);
-  trackSelector->SetMinNCrossedRowsTPC(70);
-  trackSelector->SetMinNCrossedRowsOverFindableClustersTPC(0.8f);
-  trackSelector->SetMaxChi2PerClusterTPC(4.f);
-  trackSelector->SetRequireHitsInITSLayers(1, {0, 1}); // one hit in any SPD layer
-  trackSelector->SetMaxChi2PerClusterITS(36.f);
-  trackSelector->SetMaxDcaXYPtDep([](float pt) { return 0.0105f + 0.0350f / pow(pt, 1.1f); });
-  trackSelector->SetMaxDcaZ(2.f);
-  return trackSelector;
+  SetTrackType(o2::aod::track::Run2Track);
+  SetRequireITSRefit(true);
+  SetRequireTPCRefit(true);
+  SetRequireGoldenChi2(true);
+  SetMinNCrossedRowsTPC(70);
+  SetMinNCrossedRowsOverFindableClustersTPC(0.8f);
+  SetMaxChi2PerClusterTPC(4.f);
+  SetRequireHitsInITSLayers(1, {0, 1}); // one hit in any SPD layer
+  SetMaxChi2PerClusterITS(36.f);
+  SetMaxDcaXYPtDep([](float pt) { return 0.0105f + 0.0350f / pow(pt, 1.1f); });
+  SetMaxDcaZ(2.f);
 }
 
 // Default track selection requiring no hit in the SPD and one in the innermost DCAxy according to LHC2011
 // SDD -> complementary tracks to global selection
-TrackSelectionBrick* TrackSelectionBrick::getFB64LHC2011()
+void TrackSelectionBrick::constructFB64LHC2011()
 {
-  TrackSelectionBrick* trackSelector = getFB36LHC2011();
-  trackSelector->ResetITSRequirements();
-  trackSelector->SetRequireNoHitsInITSLayers({0, 1}); // no hit in SPD layers
-  trackSelector->SetRequireHitsInITSLayers(1, {2});   // one hit in first SDD layer
-  return trackSelector;
+  constructFB36LHC2011();
+  ResetITSRequirements();
+  SetRequireNoHitsInITSLayers({0, 1}); // no hit in SPD layers
+  SetRequireHitsInITSLayers(1, {2});   // one hit in first SDD layer
 }
 
 bool TrackSelectionBrick::FulfillsITSHitRequirements(uint8_t itsClusterMap)

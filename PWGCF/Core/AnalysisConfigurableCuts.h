@@ -476,14 +476,14 @@ class TrackSelectionBrick : public SpecialCutBrick
   void DisableMaxDcaXYCheck(bool disable = true) { mCheckMaxDcaXY = not disable; }
   void DisableMaxDcaZCheck(bool disable = true) { mCheckMaxDcaZ = not disable; }
 
-  static TrackSelectionBrick* getFB1LHC2010();
-  static TrackSelectionBrick* getFB1LHC2011();
-  static TrackSelectionBrick* getFB36LHC2010();
-  static TrackSelectionBrick* getFB36LHC2011();
-  static TrackSelectionBrick* getFB64LHC2010();
-  static TrackSelectionBrick* getFB64LHC2011();
-
  private:
+  void constructFB1LHC2010();
+  void constructFB1LHC2011();
+  void constructFB36LHC2010();
+  void constructFB36LHC2011();
+  void constructFB64LHC2010();
+  void constructFB64LHC2011();
+
   bool FulfillsITSHitRequirements(uint8_t itsClusterMap);
 
   o2::aod::track::TrackTypeEnum mTrackType{o2::aod::track::TrackTypeEnum::Track};
