@@ -315,7 +315,7 @@ class CutBrickSelectorMultipleRanges : public CutBrick<TValueToFilter>
 /// \brief Class which implements a cut with its default configuration
 /// and its potential variations to be used for systematic tests
 template <typename TValueToFilter>
-class CutWithVariations : public TNamed
+class CutWithVariations : public CutBrick<TValueToFilter>
 {
  public:
   /// Default constructor
@@ -323,13 +323,13 @@ class CutWithVariations : public TNamed
   CutWithVariations(const char*, const char*, bool);
   CutWithVariations(const TString&);
   virtual ~CutWithVariations() override = default;
-  CutWithVariations(const CutWithVariations&);
-  CutWithVariations& operator=(const CutWithVariations&);
+  CutWithVariations(const CutWithVariations&) = delete;
+  CutWithVariations& operator=(const CutWithVariations&) = delete;
 
   bool AddDefaultBrick(CutBrick<TValueToFilter>* brick);
   bool AddVariationBrick(CutBrick<TValueToFilter>* brick);
-  bool Filter(const TValueToFilter&);
-  int Length();
+  virtual bool Filter(const TValueToFilter&);
+  virtual int Length();
 
  private:
   void ConstructCutFromString(const TString&);
@@ -479,8 +479,8 @@ class TrackSelectionBrick : public SpecialCutBrick
  private:
   void constructFB1LHC2010();
   void constructFB1LHC2011();
-  void constructFB36LHC2010();
-  void constructFB36LHC2011();
+  void constructFB32LHC2010();
+  void constructFB32LHC2011();
   void constructFB64LHC2010();
   void constructFB64LHC2011();
 

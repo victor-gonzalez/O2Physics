@@ -74,7 +74,7 @@ CutBrick<TValueToFilter>* CutBrick<TValueToFilter>::constructBrick(const char* n
   if (not found) {
     ::Fatal("CutBrick<TValueToFilter>* CutBrick<TValueToFilter>::constructBrick", "Wrong RE: %s, trying to construct a not allowed basic cut brick", regex);
   }
-  TString brickregex = "{" + TString(name) + TString(regex) + "}";
+  TString brickregex = TString(name) + "{" + TString(regex) + "}";
 
   if (TString(regex).BeginsWith("lim")) {
     thebrick = new CutBrickLimit<TValueToFilter>(brickregex);
@@ -86,8 +86,10 @@ CutBrick<TValueToFilter>* CutBrick<TValueToFilter>::constructBrick(const char* n
     thebrick = new CutBrickExtToRange<TValueToFilter>(brickregex);
   } else if (TString(regex).BeginsWith("mrg")) {
     thebrick = new CutBrickSelectorMultipleRanges<TValueToFilter>(brickregex);
+  } else if (TString(regex).BeginsWith("cwv")) {
+    thebrick = new CutWithVariations<TValueToFilter>(brickregex);
   } else {
-    ::Fatal("CutBrick<TValueToFilter>* CutBrick<TValueToFilter>::constructBrick", "Wrong RE: %s, trying to construct na unknown basic cut brick", regex);
+    ::Fatal("CutBrick<TValueToFilter>* CutBrick<TValueToFilter>::constructBrick", "Wrong RE: %s, trying to construct an unknown basic cut brick", regex);
   }
   return thebrick;
 }
@@ -513,8 +515,9 @@ template class o2::analysis::PWGCF::CutBrickSelectorMultipleRanges<float>;
 
 /// Default constructor
 template <typename TValueToFilter>
-CutWithVariations<TValueToFilter>::CutWithVariations() : TNamed(),
-                                                         mAllowSeveralDefaults(false)
+CutWithVariations<TValueToFilter>::CutWithVariations()
+  : CutBrick<TValueToFilter>(),
+    mAllowSeveralDefaults(false)
 {
   mDefaultBricks.SetOwner(true);
   mVariationBricks.SetOwner(true);
@@ -526,7 +529,7 @@ CutWithVariations<TValueToFilter>::CutWithVariations() : TNamed(),
 /// \param severaldefaults The cut should allow multiple defaults values or not
 template <typename TValueToFilter>
 CutWithVariations<TValueToFilter>::CutWithVariations(const char* name, const char* cutstr, bool severaldefaults)
-  : TNamed(name, cutstr),
+  : CutBrick<TValueToFilter>(name, cutstr),
     mAllowSeveralDefaults(severaldefaults)
 {
   mDefaultBricks.SetOwner(true);
@@ -537,7 +540,7 @@ CutWithVariations<TValueToFilter>::CutWithVariations(const char* name, const cha
 /// \param cutstr The cuts string
 template <typename TValueToFilter>
 CutWithVariations<TValueToFilter>::CutWithVariations(const TString& cutstr)
-  : TNamed(),
+  : CutBrick<TValueToFilter>(),
     mAllowSeveralDefaults(false)
 {
   mDefaultBricks.SetOwner(true);
@@ -557,7 +560,7 @@ template <typename TValueToFilter>
 void CutWithVariations<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
   /* let's catch the first level */
-  std::regex cutregex("^(\\w+)\\{cwv\\{([\\w\\d.,{}]+)}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
+  std::regex cutregex("^(\\w+)\\{cwv\\{([\\w\\d.,;{}]+)}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
 
@@ -596,38 +599,6 @@ void CutWithVariations<TValueToFilter>::ConstructCutFromString(const TString& cu
     delete lev2toks;
   }
   delete lev1toks;
-}
-
-/// Copy constructor
-/// To be used only by the configurable framework
-/// \param
-template <typename TValueToFilter>
-CutWithVariations<TValueToFilter>::CutWithVariations(const CutWithVariations<TValueToFilter>& cwv)
-  : TNamed(cwv),
-    mAllowSeveralDefaults(cwv.mAllowSeveralDefaults)
-{
-  mDefaultBricks.SetOwner(true);
-  mVariationBricks.SetOwner(true);
-
-  if (cwv.mDefaultBricks.GetEntries() != 0) {
-    Error("CutWithVariations<TValueToFilter>::CutWithVariations", "Copying an already fully created instance");
-  }
-}
-
-/// Assignment operator
-/// To be used only by the configurable framework
-/// \param
-template <typename TValueToFilter>
-CutWithVariations<TValueToFilter>& CutWithVariations<TValueToFilter>::operator=(const CutWithVariations<TValueToFilter>& cwv)
-{
-  mAllowSeveralDefaults = cwv.mAllowSeveralDefaults;
-  mDefaultBricks.SetOwner(true);
-  mVariationBricks.SetOwner(true);
-
-  if (cwv.mDefaultBricks.GetEntries() != 0) {
-    Error("CutWithVariations<TValueToFilter>::CutWithVariations", "Copying an already fully created instance");
-  }
-  return *this;
 }
 
 /// \brief Stores the brick with a default value for the cut
@@ -734,6 +705,26 @@ SpecialCutBrick::SpecialCutBrick(const char* name, const char* title)
 
 templateClassImp(SpecialCutBrick);
 
+/// \brief Constructor from regular expression
+TrackSelectionBrick::TrackSelectionBrick(const TString& regex) : SpecialCutBrick(regex, regex)
+{
+  if (regex.EqualTo("FB1LHC2010")) {
+    constructFB1LHC2010();
+  } else if (regex.EqualTo("FB1")) {
+    constructFB1LHC2011();
+  } else if (regex.EqualTo("FB32LHC2010")) {
+    constructFB32LHC2010();
+  } else if (regex.EqualTo("FB32")) {
+    constructFB32LHC2011();
+  } else if (regex.EqualTo("FB64LHC2010")) {
+    constructFB64LHC2010();
+  } else if (regex.EqualTo("FB64")) {
+    constructFB64LHC2011();
+  } else {
+    ::Fatal("TrackSelectionBrick::TrackSelectionBrick", "Wrong RE: %s, trying to construct an unknown track type selector", regex.Data());
+  }
+}
+
 // Default TPC only track selection according to LHC2010
 void TrackSelectionBrick::constructFB1LHC2010()
 {
@@ -747,7 +738,7 @@ void TrackSelectionBrick::constructFB1LHC2010()
 }
 
 // Default track selection requiring one hit in the SPD DCAxy according to LHC2010
-void TrackSelectionBrick::constructFB36LHC2010()
+void TrackSelectionBrick::constructFB32LHC2010()
 {
   SetTrackType(o2::aod::track::Run2Track);
   SetRequireITSRefit(true);
@@ -766,7 +757,7 @@ void TrackSelectionBrick::constructFB36LHC2010()
 // SDD -> complementary tracks to global selection
 void TrackSelectionBrick::constructFB64LHC2010()
 {
-  constructFB36LHC2010();
+  constructFB32LHC2010();
   ResetITSRequirements();
   SetRequireNoHitsInITSLayers({0, 1}); // no hit in SPD layers
   SetRequireHitsInITSLayers(1, {2});   // one hit in first SDD layer
@@ -780,7 +771,7 @@ void TrackSelectionBrick::constructFB1LHC2011()
 }
 
 // Default track selection requiring one hit in the SPD DCAxy according to LHC2011
-void TrackSelectionBrick::constructFB36LHC2011()
+void TrackSelectionBrick::constructFB32LHC2011()
 {
   SetTrackType(o2::aod::track::Run2Track);
   SetRequireITSRefit(true);
@@ -799,7 +790,7 @@ void TrackSelectionBrick::constructFB36LHC2011()
 // SDD -> complementary tracks to global selection
 void TrackSelectionBrick::constructFB64LHC2011()
 {
-  constructFB36LHC2011();
+  constructFB32LHC2011();
   ResetITSRequirements();
   SetRequireNoHitsInITSLayers({0, 1}); // no hit in SPD layers
   SetRequireHitsInITSLayers(1, {2});   // one hit in first SDD layer
