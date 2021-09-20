@@ -18,6 +18,7 @@
 #include "Common/Core/TrackSelectionDefaults.h"
 #include "Common/DataModel/PIDResponse.h"
 #include "PWGCF/Core/AnalysisConfigurableCuts.h"
+#include "PWGCF/Core/TrackSelectionFilterAndAnalysis.h"
 #include "PWGCF/DataModel/DptDptFiltered.h"
 #include "Common/DataModel/TrackSelectionTables.h"
 #include "Framework/runDataProcessing.h"
@@ -68,6 +69,8 @@ enum MatchRecoGenSpecies {
 const char* speciesName[kDptDptNoOfSpecies] = {"h", "e", "mu", "pi", "ka", "p"};
 
 const char* speciesTitle[kDptDptNoOfSpecies] = {"", "e", "#mu", "#pi", "K", "p"};
+
+TrackSelectionFilterAndAnalysis* fTrackFilter = nullptr;
 
 //============================================================================================
 // The DptDptFilter output objects
@@ -156,6 +159,9 @@ struct DptDptFilter {
   Configurable<int> cfgRecoIdMethod{"recoidmethod", 0, "Method for identifying reconstructed tracks: 0 No PID, 1 PID, 2 mcparticle. Default 0"};
   Configurable<o2::analysis::TrackSelectionCfg> cfgTrackSelection{"tracksel", {false, false, 0, 70, 0.8, 2.4, 3.2}, "Track selection: {useit: true/false, ongen: true/false, tpccls, tpcxrws, tpcxrfc, dcaxy, dcaz}. Default {false,0.70.0.8,2.4,3.2}"};
   Configurable<bool> cfgTraceCollId0{"tracecollid0", false, "Trace particles in collisions id 0. Default false"};
+  Configurable<std::string> cfgTrackFilterString{"trackfilter",
+                                                 "tracksel{ttype{FB1,FB32,FB64};nclstpc{cwv{th{70};th{80},th{90}}},chi2clustpc{cwv{lim{4};lim{3},lim{90}}}}",
+                                                 "Check documentation for more info"};
 
   OutputObj<TList> fOutput{"DptDptFilterGlobalInfo", OutputObjHandlingPolicy::AnalysisObject};
 
@@ -433,6 +439,9 @@ struct DptDptFilter {
       useOwnTrackSelection = false;
     }
     traceCollId0 = cfgTraceCollId0;
+
+    /* track filtering configuration */
+    fTrackFilter = new TrackSelectionFilterAndAnalysis(TString(cfgTrackFilterString));
 
     /* if the system type is not known at this time, we have to put the initalization somewhere else */
     fSystem = getSystemType(cfgSystem);
