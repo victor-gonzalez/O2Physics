@@ -41,8 +41,7 @@ struct TrackExtensionTask {
 
       std::array<float, 2> dca{1e10f, 1e10f};
       if (track.has_collision()) {
-        if ((track.trackType() == o2::aod::track::TrackTypeEnum::Track) ||
-            (track.trackType() == o2::aod::track::TrackTypeEnum::Run2Track && track.itsChi2NCl() != 0.f && track.tpcChi2NCl() != 0.f && std::abs(track.x()) < 10.f)) {
+        if ((track.trackType() == o2::aod::track::TrackTypeEnum::Run2Track && track.itsChi2NCl() != 0.f && track.tpcChi2NCl() != 0.f && std::abs(track.x()) < 10.f)) {
           float magField = 5.0; // in kG (FIXME: get this from CCDB)
           auto trackPar = getTrackPar(track);
           auto const& collision = track.collision();
