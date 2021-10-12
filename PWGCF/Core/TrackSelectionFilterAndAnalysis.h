@@ -37,15 +37,16 @@ class TrackSelectionFilterAndAnalysis : public TNamed
   void SetEtaRange(const TString&);
 
   template <typename TrackToFilter>
-  bool Filter(TrackToFilter const& track);
+  uint64_t Filter(TrackToFilter const& track);
 
  private:
   void ConstructCutFromString(const TString&);
+  int CalculateMaskLength();
 
   TList mTrackTypes;                                        /// the track types to select list
-  CutBrick<float>* mNClustersTPC;                           //! the number of TPC clusters cuts
-  CutBrick<float>* mNCrossedRowsTPC;                        //! the number of TPC crossed rows cuts
-  CutBrick<float>* mNClustersITS;                           //! the number of ITS clusters cuts
+  CutBrick<int>* mNClustersTPC;                             //! the number of TPC clusters cuts
+  CutBrick<int>* mNCrossedRowsTPC;                          //! the number of TPC crossed rows cuts
+  CutBrick<int>* mNClustersITS;                             //! the number of ITS clusters cuts
   CutBrick<float>* mMaxChi2PerClusterTPC;                   //! the max Chi2 per TPC cluster cuts
   CutBrick<float>* mMaxChi2PerClusterITS;                   //! the max Chi2 per ITS cluster cuts
   CutBrick<float>* mMinNCrossedRowsOverFindableClustersTPC; //! the min ration crossed TPC rows over findable TPC clusters cuts
@@ -59,6 +60,72 @@ class TrackSelectionFilterAndAnalysis : public TNamed
 
   ClassDef(TrackSelectionFilterAndAnalysis, 1)
 };
+
+/// \brief Fills the filter cuts mask
+template <typename TrackToFilter>
+uint64_t TrackSelectionFilterAndAnalysis::Filter(TrackToFilter const& track)
+{
+  /* limit for the current implementation */
+  int length = CalculateMaskLength();
+  if (length > 64) {
+    LOGF(fatal, "TrackSelectionFilterAndAnalysis not ready for filter mask of %d bits. Just 64 available for the time being");
+  }
+
+  uint64_t selectedMask = 0UL;
+  int bit = 0;
+
+  auto filterTrackType = [&](TrackSelectionBrick* ttype, auto trk) {
+    if (ttype->Filter(trk)) {
+      SETBIT(selectedMask, bit);
+    }
+    bit++;
+  };
+
+  auto filterBrickValue = [&](auto brick, auto value) {
+    std::vector<bool> res = brick->Filter(value);
+    for (auto b : res) {
+      if (b) {
+        SETBIT(selectedMask, bit);
+      }
+      bit++;
+    }
+  };
+
+  for (int i = 0; i < mTrackTypes.GetEntries(); ++i) {
+    filterTrackType((TrackSelectionBrick*)mTrackTypes.At(i), track);
+  }
+  if (mNClustersTPC != nullptr) {
+    filterBrickValue(mNClustersTPC, track.tpcNClsFound());
+  }
+  if (mNCrossedRowsTPC != nullptr) {
+    filterBrickValue(mNCrossedRowsTPC, track.tpcNClsCrossedRows());
+  }
+  if (mNClustersITS != nullptr) {
+    filterBrickValue(mNClustersITS, track.itsNCls());
+  }
+  if (mMaxChi2PerClusterTPC != nullptr) {
+    filterBrickValue(mMaxChi2PerClusterTPC, track.tpcChi2NCl());
+  }
+  if (mMaxChi2PerClusterITS != nullptr) {
+    filterBrickValue(mMaxChi2PerClusterITS, track.itsChi2NCl());
+  }
+  if (mMinNCrossedRowsOverFindableClustersTPC != nullptr) {
+    filterBrickValue(mMinNCrossedRowsOverFindableClustersTPC, track.tpcCrossedRowsOverFindableCls());
+  }
+  if (mMaxDcaXY != nullptr) {
+    filterBrickValue(mMaxDcaXY, track.dcaXY());
+  }
+  if (mMaxDcaZ != nullptr) {
+    filterBrickValue(mMaxDcaZ, track.dcaZ());
+  }
+  if (mPtRange != nullptr) {
+    filterBrickValue(mPtRange, track.pt());
+  }
+  if (mEtaRange != nullptr) {
+    filterBrickValue(mEtaRange, track.eta());
+  }
+  return mSelectedMask = selectedMask;
+}
 
 } // namespace PWGCF
 } // namespace analysis
