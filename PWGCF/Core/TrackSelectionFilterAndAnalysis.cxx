@@ -245,3 +245,4 @@ void TrackSelectionFilterAndAnalysis::ConstructCutFromString(const TString& cuts
   }
   mMaskLength = CalculateMaskLength();
 }
+

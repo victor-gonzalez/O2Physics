@@ -76,18 +76,16 @@ uint64_t TrackSelectionFilterAndAnalysis::Filter(TrackToFilter const& track)
 
   auto filterTrackType = [&](TrackSelectionBrick* ttype, auto trk) {
     if (ttype->Filter(trk)) {
-      SETBIT(selectedMask, bit);
+      SETBIT(selectedMask, bit++);
     }
-    bit++;
   };
 
   auto filterBrickValue = [&](auto brick, auto value) {
     std::vector<bool> res = brick->Filter(value);
     for (auto b : res) {
       if (b) {
-        SETBIT(selectedMask, bit);
+        SETBIT(selectedMask, bit++);
       }
-      bit++;
     }
   };
 
