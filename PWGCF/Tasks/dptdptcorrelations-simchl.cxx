@@ -228,6 +228,7 @@ TH2F* fhTruePtVsEtaA = nullptr;
 TH1F* fhTrueDCAxyB = nullptr;
 TH1F* fhTrueDCAxyA = nullptr;
 TH1F* fhTrueDCAzB = nullptr;
+TH1F* fhTrueDCAxyBid = nullptr;
 TH1F* fhTrueDCAzA = nullptr;
 } // namespace filteranalysistask
 
@@ -519,6 +520,12 @@ void fillParticleHistosBeforeSelection(ParticleObject const& particle, MCCollisi
     fhTruePtNegB->Fill(particle.pt());
   }
 
+  float dcaxy = TMath::Sqrt((particle.vx() - collision.posX()) * (particle.vx() - collision.posX()) +
+                            (particle.vy() - collision.posY()) * (particle.vy() - collision.posY()));
+  if ((1.8 < dcaxy) and (dcaxy < 2.0)) {
+    fhTrueDCAxyBid->Fill(TString::Format("%d", particle.pdgCode()).Data(), 1.0);
+  }
+
   fhTrueDCAxyB->Fill(TMath::Sqrt((particle.vx() - collision.posX()) * (particle.vx() - collision.posX()) +
                                  (particle.vy() - collision.posY()) * (particle.vy() - collision.posY())));
   fhTrueDCAzB->Fill((particle.vz() - collision.posZ()));
@@ -538,6 +545,14 @@ void fillParticleHistosAfterSelection(ParticleObject const& particle, MCCollisio
     fhTruePtPosA->Fill(particle.pt());
   } else {
     fhTruePtNegA->Fill(particle.pt());
+  }
+
+  float dcaxy = TMath::Sqrt((particle.vx() - collision.posX()) * (particle.vx() - collision.posX()) +
+                            (particle.vy() - collision.posY()) * (particle.vy() - collision.posY()));
+  if ((1.0 < dcaxy) and (dcaxy < 3.0)) {
+    LOGF(info, "DCAxy outlier: Particle with index %d and pdg code %d assigned to MC collision %d, pT: %f, phi: %f, eta: %f",
+         particle.globalIndex(), particle.pdgCode(), particle.mcCollisionId(), particle.pt(), particle.phi(), particle.eta());
+    LOGF(info, "               With status %d and flags %0X", particle.statusCode(), particle.flags());
   }
 
   fhTrueDCAxyA->Fill(TMath::Sqrt((particle.vx() - collision.posX()) * (particle.vx() - collision.posX()) +
@@ -619,6 +634,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
           fillTrackHistosAfterSelection(track);
           acceptedtracks++;
           scannedtracks(colix, (uint8_t)asone, (uint8_t)astwo, track.pt(), track.eta(), track.phi());
+          LOGF(DPTDPTLOGTRACKS, "Accepted track with global Id %d and with assigned collision Id %d", track.globalIndex(), track.collisionId());
         }
       }
     }
@@ -793,6 +809,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
       fhTruePtVsEtaB = new TH2F(TString::Format("fhTruePtVsEtaB_%s", fTaskConfigurationString.c_str()), "p_{T} vs #eta before (truth);#eta;p_{T} (GeV/c)", etabins, etalow, etaup, 100, 0.0, 15.0);
       fhTruePtVsEtaA = new TH2F(TString::Format("fhTruePtVsEtaA_%s", fTaskConfigurationString.c_str()), "p_{T} vs #eta (truth);#eta;p_{T} (GeV/c)", etabins, etalow, etaup, ptbins, ptlow, ptup);
       fhTrueDCAxyB = new TH1F("TrueDCAxyB", "DCA_{xy} distribution for generated before;DCA_{xy} (cm);counts", 1000, -4.0, 4.0);
+      fhTrueDCAxyBid = new TH1F("PDGCodeDCAxyB", "PDG code within 1.8<|DCA_{#it{xy}}|<2.0; PDG code", 100, 0.5, 100.5);
       fhTrueDCAxyA = new TH1F("TrueDCAxyA", "DCA_{xy} distribution for generated;DCA_{xy};counts (cm)", 1000, -4., 4.0);
       fhTrueDCAzB = new TH1F("TrueDCAzB", "DCA_{z} distribution for generated before;DCA_{z} (cm);counts", 1000, -4.0, 4.0);
       fhTrueDCAzA = new TH1F("TrueDCAzA", "DCA_{z} distribution for generated;DCA_{z} (cm);counts", 1000, -4.0, 4.0);
@@ -817,6 +834,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
       fOutputList->Add(fhTruePtVsEtaB);
       fOutputList->Add(fhTruePtVsEtaA);
       fOutputList->Add(fhTrueDCAxyB);
+      fOutputList->Add(fhTrueDCAxyBid);
       fOutputList->Add(fhTrueDCAxyA);
       fOutputList->Add(fhTrueDCAzB);
       fOutputList->Add(fhTrueDCAzA);
@@ -855,7 +873,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
 
     LOGF(DPTDPTLOGCOLLISIONS, "FilterAnalysisTask::processWithoutCent(). New collision with collision id %d and with %d tracks", collision.bcId(), ftracks.size());
 
-    /* the task does not have access to either centrality nor multiplicity 
+    /* the task does not have access to either centrality nor multiplicity
        classes information, so it has to live without it.
        For the time being we assign a value of 50% */
     fhCentMultB->Fill(50.0);
@@ -912,7 +930,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
 
     LOGF(DPTDPTLOGCOLLISIONS, "FilterAnalysisTask::processWithoutCentDetectorLevel(). New collision with collision id %d and with %d tracks", collision.bcId(), ftracks.size());
 
-    /* the task does not have access to either centrality nor multiplicity 
+    /* the task does not have access to either centrality nor multiplicity
        classes information, so it has to live without it.
        For the time being we assign a value of 50% */
     fhCentMultB->Fill(50.0);
@@ -925,6 +943,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
       fhVertexZA->Fill(collision.posZ());
       acceptedevents(collision.bcId(), collision.posZ(), (uint8_t)acceptedevent, centormult);
 
+      LOGF(DPTDPTLOGCOLLISIONS, "Accepted collision with BC id %d and collision Id %d", collision.bcId(), collision.globalIndex());
       filterDetectorLevelTracks(ftracks, acceptedevents.lastIndex());
     } else {
       acceptedevents(collision.bcId(), collision.posZ(), (uint8_t)acceptedevent, centormult);
@@ -985,7 +1004,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
 
     LOGF(DPTDPTLOGCOLLISIONS, "FilterAnalysisTask::processWithoutCentGeneratorLevel(). New generated collision with %d particles", mcparticles.size());
 
-    /* the task does not have access to either centrality nor multiplicity 
+    /* the task does not have access to either centrality nor multiplicity
        classes information, so it has to live without it.
        For the time being we assign a value of 50% */
     fhTrueCentMultB->Fill(50.0);
@@ -1622,7 +1641,7 @@ struct TracksAndEventClassificationQARec {
 };
 
 /* it seems we cannot use a base class task */
-//struct TracksAndEventClassificationQAGen : TracksAndEventClassificationQABase {
+// struct TracksAndEventClassificationQAGen : TracksAndEventClassificationQABase {
 struct TracksAndEventClassificationQAGen {
   OutputObj<TList> fOutput{"FliterTaskGenQA", OutputObjHandlingPolicy::AnalysisObject};
 
@@ -1667,6 +1686,8 @@ struct CheckGeneratorLevelVsDetectorLevel {
                  kAFTER } beforeafterselection;
   typedef enum { kPOSITIVE = 0,
                  kNEGATIVE } colllabelsign;
+  enum { kMATCH = 0,
+         kDONTMATCH };
 
   void init(InitContext const& context)
   {
@@ -1708,6 +1729,7 @@ struct CheckGeneratorLevelVsDetectorLevel {
                                              "TOF", "ITS+TOF", "TPC+TOF", "ITS+TPC+TOF", "TRD+TOF", "ITS+TRD+TOF", "TPC+TRD+TOF", "ITS+TPC+TRD+TOF",
                                              "UNKN", "ITS+UNKN", "TPC+UNKN", "ITS+TPC+UNKN", "TRD+UNKN", "ITS+TRD+UNKN", "TPC+TRD+UNKN", "ITS+TPC+TRD+UNKN",
                                              "TOF+UNKN", "ITS+TOF+UNKN", "TPC+TOF+UNKN", "ITS+TPC+TOF+UNKN", "TRD+TOF+UNKN", "ITS+TRD+TOF+UNKN", "TPC+TRD+TOF+UNKN", "ITS+TPC+TRD+TOF+UNKN"};
+    std::vector<std::string> matchlbs = {"match", "don't match"};
 
     histos.add("before/positivecolid/mrDeltaEta", "#Delta#eta multirec tracks", kTH1F, {deltaEta});
     histos.add("before/positivecolid/mrDeltaPhi", "#Delta#varphi multirec tracks", kTH1F, {deltaPhi});
@@ -1717,6 +1739,7 @@ struct CheckGeneratorLevelVsDetectorLevel {
     histos.add("before/positivecolid/genrecophi", "#varphi Generated vs reconstructed", kTH2F, {{100, 0, TWOPI, "#varphi (rad) reco"}, {100, 0, TWOPI, "#varphi (rad) gen"}});
     histos.add("before/positivecolid/genrecopt", "#it{p}_{T} Generated vs reconstructed", kTH2F, {{1000, 0, 10.0, "#it{p}_{T} (GeV/#it{c}) reco"}, {1000, 0, 10.0, "#it{p}_{T} (GeV/#it{c}) gen"}});
     histos.add("before/positivecolid/detectormap", "Active detectors", kTH1F, {detectors});
+    histos.add("before/positivecolid/matchcollid", "particle MC coll Id <=> track coll MC coll Id", kTH1F, {{2, 0.0, 2.0}});
     histos.add("before/positivecolid/genrecomreta", "#eta Generated vs reconstructed (mr)", kTH2F, {{100, -1.0, 1.0, "#eta reco"}, {100, -1.0, 1.0, "#eta gen"}});
     histos.add("before/positivecolid/genrecomrphi", "#varphi Generated vs reconstructed (mr)", kTH2F, {{100, 0, TWOPI, "#varphi (rad) reco"}, {100, 0, TWOPI, "#varphi (rad) gen"}});
     histos.add("before/positivecolid/genrecomrpt", "#it{p}_{T} Generated vs reconstructed (mr)", kTH2F, {{1000, 0, 10.0, "#it{p}_{T} (GeV/#it{c}) reco"}, {1000, 0, 10.0, "#it{p}_{T} (GeV/#it{c}) gen"}});
@@ -1724,6 +1747,7 @@ struct CheckGeneratorLevelVsDetectorLevel {
     histos.add("before/positivecolid/recomrphi", "#varphi Reconstructed (mr)", kTH1F, {{100, 0, TWOPI, "#varphi (rad)"}});
     histos.add("before/positivecolid/recomrpt", "#it{p}_{T} Reconstructed (mr)", kTH1F, {{1000, 0, 10.0, "#it{p}_{T} (GeV/#it{c})"}});
     histos.add("before/positivecolid/detectormapmr", "Active detectors (mr)", kTH1F, {detectors});
+    histos.add("before/positivecolid/matchcollidmr", "particle MC coll Id <=> track coll MC coll Id (mr)", kTH1F, {{2, 0.0, 2.0}});
     histos.add("before/positivecolid/dcaxy", "DCA_{xy} Reconstructed", kTH1F, {{1000, -4.0, 4.0, "DCA_{xy} (cm)"}});
     histos.add("before/positivecolid/dcaz", "DCA_{z} Reconstructed", kTH1F, {{1000, -4.0, 4.0, "DCA_{z} (cm)"}});
     histos.add("before/positivecolid/finedcaxy", "DCA_{xy} Reconstructed", kTH1F, {{2000, -1.0, 1.0, "DCA_{xy} (cm)"}});
@@ -1736,14 +1760,20 @@ struct CheckGeneratorLevelVsDetectorLevel {
       histos.get<TH1>(HIST("before/positivecolid/detectormap"))->GetXaxis()->SetBinLabel(i + 1, detectorlbls[i].c_str());
       histos.get<TH1>(HIST("before/positivecolid/detectormapmr"))->GetXaxis()->SetBinLabel(i + 1, detectorlbls[i].c_str());
     }
+    for (int i = 0; i < matchlbs.size(); ++i) {
+      histos.get<TH1>(HIST("before/positivecolid/matchcollid"))->GetXaxis()->SetBinLabel(i + 1, matchlbs[i].c_str());
+      histos.get<TH1>(HIST("before/positivecolid/matchcollidmr"))->GetXaxis()->SetBinLabel(i + 1, matchlbs[i].c_str());
+    }
+
     /* clone the set for the other cases */
     histos.addClone("before/positivecolid/", "after/positivecolid/");
     histos.addClone("before/positivecolid/", "before/negativecolid/");
     histos.addClone("before/positivecolid/", "after/negativecolid/");
+    histos.add("after/positivecolid/pdgcodemr", "PDG code x-collision multi-reconstructed", kTH1F, {{100, 0.5, 100.5, "PDG code"}});
   }
 
-  template <beforeafterselection ba, colllabelsign collsign, typename TracskListObject, typename ParticlesListObject>
-  void collectData(TracskListObject const& tracks, ParticlesListObject const& mcParticles)
+  template <beforeafterselection ba, colllabelsign collsign, typename TracskListObject, typename ParticlesListObject, typename CollisionsListObject>
+  void collectData(TracskListObject const& tracks, ParticlesListObject const& mcParticles, CollisionsListObject const& colls)
   {
     using namespace recogenmap;
 
@@ -1779,6 +1809,20 @@ struct CheckGeneratorLevelVsDetectorLevel {
                 crosscollfound = true;
               }
             }
+          }
+          if (crosscollfound and (ba == kAFTER)) {
+            LOGF(info, "BEGIN multi-reconstructed: ==================================================================");
+            LOGF(info, "Particle with index %d and pdg code %d assigned to MC collision %d, pT: %f, phi: %f, eta: %f",
+                 particle.globalIndex(), particle.pdgCode(), particle.mcCollisionId(), particle.pt(), particle.phi(), particle.eta());
+            LOGF(info, "With status %d and flags %0X and multi-reconstructed as: ==================================", particle.statusCode(), particle.flags());
+            for (int i = 0; i < mclabelpos[collsign][ixpart].size(); ++i) {
+              auto track = tracks.iteratorAt(mclabelpos[collsign][ixpart][i]);
+              auto coll = colls.iteratorAt(track.collisionId());
+              LOGF(info, "Track with index %d and label %d assigned to collision %d, with associated MC collision %d",
+                   track.globalIndex(), ixpart, track.collisionId(), coll.mcCollisionId());
+            }
+            LOGF(info, "END multi-reconstructed:   ==================================================================");
+            histos.get<TH1>(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("pdgcodemr"))->Fill(TString::Format("%d", particle.pdgCode()).Data(), 1.0);
           }
         }
 
@@ -1816,6 +1860,11 @@ struct CheckGeneratorLevelVsDetectorLevel {
           histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("genrecomreta"), track1.eta(), particle.eta());
           histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("genrecomrphi"), track1.phi(), particle.phi());
           histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("genrecomrpt"), track1.pt(), particle.pt());
+          if (particle.mcCollisionId() != colls.iteratorAt(track1.collisionId()).mcCollisionId()) {
+            histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("matchcollidmr"), kDONTMATCH + 0.5f);
+          } else {
+            histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("matchcollidmr"), kMATCH + 0.5f);
+          }
         }
       } else if (nrec > 0) {
         auto track = tracks.iteratorAt(mclabelpos[collsign][ixpart][0]);
@@ -1831,6 +1880,18 @@ struct CheckGeneratorLevelVsDetectorLevel {
         if (track.dcaZ() < 1.0) {
           histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("finedcaz"), track.dcaZ());
         }
+        if (particle.mcCollisionId() != colls.iteratorAt(track.collisionId()).mcCollisionId()) {
+          if ((ba == kAFTER) and (collsign == kPOSITIVE)) {
+            LOGF(info, "Particle with index %d and pdg code %d assigned to MC collision %d, pT: %f, phi: %f, eta: %f",
+                 particle.globalIndex(), particle.pdgCode(), particle.mcCollisionId(), particle.pt(), particle.phi(), particle.eta());
+            LOGF(info, "        with status %d and flags %0X and", particle.statusCode(), particle.flags());
+            LOGF(info, "        associated to track with index %d and label %d assigned to collision %d, with associated MC collision %d",
+                 track.globalIndex(), ixpart, track.collisionId(), colls.iteratorAt(track.collisionId()).mcCollisionId());
+          }
+          histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("matchcollid"), kDONTMATCH + 0.5f);
+        } else {
+          histos.fill(HIST(dir[ba]) + HIST(colldir[collsign]) + HIST("matchcollid"), kMATCH + 0.5f);
+        }
       }
     }
 
@@ -1843,7 +1904,9 @@ struct CheckGeneratorLevelVsDetectorLevel {
     }
   }
 
-  void processMapChecksBeforeCuts(soa::Join<aod::Tracks, aod::TracksExtra, aod::TracksExtended, aod::McTrackLabels> const& tracks, aod::McParticles const& mcParticles)
+  void processMapChecksBeforeCuts(soa::Join<aod::Tracks, aod::TracksExtra, aod::TracksExtended, aod::McTrackLabels> const& tracks,
+                                  soa::Join<aod::Collisions, aod::McCollisionLabels> const& collisions,
+                                  aod::McParticles const& mcParticles)
   {
     using namespace recogenmap;
 
@@ -1891,13 +1954,13 @@ struct CheckGeneratorLevelVsDetectorLevel {
       }
     }
 
-    collectData<kBEFORE, kPOSITIVE>(tracks, mcParticles);
-    collectData<kBEFORE, kNEGATIVE>(tracks, mcParticles);
+    collectData<kBEFORE, kPOSITIVE>(tracks, mcParticles, collisions);
+    collectData<kBEFORE, kNEGATIVE>(tracks, mcParticles, collisions);
   }
   PROCESS_SWITCH(CheckGeneratorLevelVsDetectorLevel, processMapChecksBeforeCuts, "Process detector <=> generator levels mapping checks before selection cuts", false);
 
   void processMapChecksCutsWithCent(soa::Join<aod::FullTracks, aod::TracksExtended, aod::TrackSelection, aod::McTrackLabels> const& tracks,
-                                    aod::CollisionsEvSelCent const& collisions,
+                                    soa::Join<aod::CollisionsEvSelCent, aod::McCollisionLabels> const& collisions,
                                     aod::McParticles const& mcParticles)
   {
     using namespace recogenmap;
@@ -1947,12 +2010,12 @@ struct CheckGeneratorLevelVsDetectorLevel {
     }
     LOGF(info, "New dataframe (DF) with %d generated charged particles and %d reconstructed accepted tracks", ngen, nreco);
 
-    collectData<kAFTER, kPOSITIVE>(tracks, mcParticles);
+    collectData<kAFTER, kPOSITIVE>(tracks, mcParticles, collisions);
   }
   PROCESS_SWITCH(CheckGeneratorLevelVsDetectorLevel, processMapChecksCutsWithCent, "Process detector <=> generator levels mapping checks after selection cuts", false);
 
   void processMapChecksCutsWithoutCent(soa::Join<aod::FullTracks, aod::TracksExtended, aod::TrackSelection, aod::McTrackLabels> const& tracks,
-                                       aod::CollisionsEvSel const& collisions,
+                                       soa::Join<aod::CollisionsEvSel, aod::McCollisionLabels> const& collisions,
                                        aod::McParticles const& mcParticles)
   {
     using namespace recogenmap;
@@ -2002,7 +2065,7 @@ struct CheckGeneratorLevelVsDetectorLevel {
     }
     LOGF(info, "New dataframe (DF) with %d generated charged particles and %d reconstructed accepted tracks", ngen, nreco);
 
-    collectData<kAFTER, kPOSITIVE>(tracks, mcParticles);
+    collectData<kAFTER, kPOSITIVE>(tracks, mcParticles, collisions);
   }
   PROCESS_SWITCH(CheckGeneratorLevelVsDetectorLevel, processMapChecksCutsWithoutCent, "Process detector <=> generator levels mapping checks after selection cuts", false);
 
