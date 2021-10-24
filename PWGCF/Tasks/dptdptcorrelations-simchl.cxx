@@ -171,7 +171,7 @@ namespace filteranalysistask
 SystemType fSystem = kNoSystem;
 GenType fDataType = kData;
 CentMultEstimatorType fCentMultEstimator = kV0M;
-TDatabasePDG* fPDG = nullptr;
+Service<TDatabasePDG> fPDG;
 TH1F* fhCentMultB = nullptr;
 TH1F* fhCentMultA = nullptr;
 TH1F* fhVertexZB = nullptr;
@@ -706,7 +706,6 @@ struct DptDptCorrelationsFilterAnalysisTask {
     /* if the system type is not known at this time, we have to put the initalization somewhere else */
     fSystem = getSystemType(cfgSystem);
     fDataType = getGenType(cfgDataType);
-    fPDG = TDatabasePDG::Instance();
 
     /* create the output list which will own the task histograms */
     TList* fOutputList = new TList();
@@ -1681,7 +1680,7 @@ struct CheckGeneratorLevelVsDetectorLevel {
                                                            "triplets - nbins, min, max - for z_vtx, pT, eta and phi, binning plus bin fraction of phi origin shift"};
 
   HistogramRegistry histos{"RecoGenHistograms", {}, OutputObjHandlingPolicy::AnalysisObject, true, true};
-  TDatabasePDG* fPDG;
+  Service<TDatabasePDG> fPDG;
   typedef enum { kBEFORE = 0,
                  kAFTER } beforeafterselection;
   typedef enum { kPOSITIVE = 0,
@@ -1717,8 +1716,7 @@ struct CheckGeneratorLevelVsDetectorLevel {
     }
     fDataType = getGenType(cfgDataType);
 
-    constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
-    fPDG = TDatabasePDG::Instance();
+    constexpr float TWOPI = 2.0f * static_cast<float>(M_PI);
 
     AxisSpec deltaEta = {100, -2, 2, "#Delta#eta"};
     AxisSpec deltaPhi = {100, 0, TWOPI, "#Delta#varphi (rad)"};
