@@ -35,4 +35,6 @@
 #pragma link C++ class o2::analysis::PWGCF::CutWithVariations < int> + ;
 #pragma link C++ class o2::analysis::PWGCF::SpecialCutBrick + ;
 #pragma link C++ class o2::analysis::PWGCF::TrackSelectionBrick + ;
+#pragma link C++ class o2::analysis::PWGCF::PIDSelectionBrick + ;
 #pragma link C++ class o2::analysis::PWGCF::TrackSelectionFilterAndAnalysis + ;
+#pragma link C++ class o2::analysis::PWGCF::PIDSelectionFilterAndAnalysis + ;

@@ -840,3 +840,76 @@ const std::string TrackSelectionBrick::mCutNames[static_cast<int>(TrackSelection
     "DCAz"};
 
 ClassImp(TrackSelectionBrick);
+
+/// \brief Construct object from regular expression
+/// \param regex The brick regular expression
+/// Regular expression has to be of the shape
+/// {sp{tpc{cwv{rg{-2.0,2.0};rg{-3.0,3.0}};sp1{cwv{xrg{-2.0,2.0};xrg{-3.0,3.0}}}}}{tof ...}}
+PIDSelectionBrick::PIDSelectionBrick(const TString& regex) : SpecialCutBrick(regex, regex)
+{
+  ConstructFromString(regex);
+}
+
+/// \brief Construct object from regular expression
+/// \param regex The brick regular expression
+/// Regular expression has to be of the shape
+/// {sp{tpc{cwv{rg{-2.0,2.0};rg{-3.0,3.0}};sp1{cwv{xrg{-2.0,2.0};xrg{-3.0,3.0}}}}}{tof ...}}
+void PIDSelectionBrick::ConstructFromString(const TString& regex)
+{
+}
+
+/// \brief Length of the brick
+/// \return The brick length
+/// Recover the length for each of the components
+/// and returns their sum
+int PIDSelectionBrick::Length()
+{
+  int len = 0;
+  for (auto brick : mCloseNsigmasTPC) {
+    if (brick != nullptr) {
+      len += brick->Length();
+    }
+  }
+  for (auto brick : mCloseNsigmasTOF) {
+    if (brick != nullptr) {
+      len += brick->Length();
+    }
+  }
+  return len;
+}
+
+template <typename TrackObject>
+std::vector<bool> PIDSelectionBrick::Filter(TrackObject const& track)
+{
+  std::vector<bool> res;
+  res.reserve(Length());
+  std::vector<float> nsigmasTPC(kNoOfSpecies, 999);
+  std::vector<float> nsigmasTOF(kNoOfSpecies, 999);
+
+  nsigmasTPC[kElectron] = track.tpcNSigmaEl();
+  nsigmasTPC[kMuon] = track.tpcNSigmaMu();
+  nsigmasTPC[kPion] = track.tpcNSigmaPi();
+  nsigmasTPC[kKaon] = track.tpcNSigmaKa();
+  nsigmasTPC[kProton] = track.tpcNSigmaPr();
+  nsigmasTOF[kElectron] = track.tofNSigmaEl();
+  nsigmasTOF[kMuon] = track.tofNSigmaMu();
+  nsigmasTOF[kPion] = track.tofNSigmaPi();
+  nsigmasTOF[kKaon] = track.tofNSigmaKa();
+  nsigmasTOF[kProton] = track.tofNSigmaPr();
+
+  for (int sp = 0; sp < kNoOfSpecies; ++sp) {
+    if (mCloseNsigmasTPC[sp] != nullptr) {
+      std::vector<bool> tmp = mCloseNsigmasTPC[sp]->Filter(nsigmasTPC[sp]);
+      res.insert(res.end(), tmp.begin(), tmp.end());
+    }
+  }
+  for (int sp = 0; sp < kNoOfSpecies; ++sp) {
+    if (mCloseNsigmasTOF[sp] != nullptr) {
+      std::vector<bool> tmp = mCloseNsigmasTOF[sp]->Filter(nsigmasTOF[sp]);
+      res.insert(res.end(), tmp.begin(), tmp.end());
+    }
+  }
+  return res;
+}
+
+ClassImp(PIDSelectionBrick);

@@ -521,6 +521,55 @@ class TrackSelectionBrick : public SpecialCutBrick
   ClassDef(TrackSelectionBrick, 1);
 };
 
+class PIDSelectionBrick : public SpecialCutBrick
+{
+ public:
+  PIDSelectionBrick() : SpecialCutBrick(),
+                        mCloseNsigmasTPC(kNoOfSpecies, nullptr),
+                        mCloseNsigmasTOF(kNoOfSpecies, nullptr)
+  {
+  }
+  PIDSelectionBrick(const TString&);
+
+  enum PIDSpecies {
+    kElectron = 0, ///< electron
+    kMuon,         ///< muon
+    kPion,         ///< pion
+    kKaon,         ///< kaon
+    kProton,       ///< proton
+    kNoOfSpecies,  ///< the number of considered species
+    kWrongSpecies = -1
+  };
+
+  enum class PIDCuts : int {
+    kITS = 0,
+    kTPC,
+    kTOF,
+    kTPCTOF,
+    kNEARSIGMA,
+    kAWAYSIGMA,
+    kTOFREQ,
+    kNCuts
+  };
+
+  static const std::string mCutNames[static_cast<int>(PIDCuts::kNCuts)];
+
+  template <typename TrackToFilter>
+  std::vector<bool> Filter(TrackToFilter const& track);
+
+  int Length();
+
+ private:
+  void ConstructFromString(const TString& cutstr);
+
+ private:
+  PIDSpecies mSpeciesOfInterest = kWrongSpecies;
+  std::vector<CutWithVariations<float>*> mCloseNsigmasTPC;
+  std::vector<CutWithVariations<float>*> mCloseNsigmasTOF;
+
+  ClassDef(PIDSelectionBrick, 1);
+};
+
 } // namespace PWGCF
 } // namespace analysis
 } // namespace o2
