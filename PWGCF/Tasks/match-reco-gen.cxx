@@ -30,6 +30,7 @@
 #include <TH2.h>
 #include <TH3.h>
 #include <TProfile3D.h>
+#include <TEfficiency.h>
 
 #include <cmath>
 
@@ -251,6 +252,12 @@ TH1F* fhTrueDCAxyA = nullptr;
 TH1F* fhTrueDCAzB = nullptr;
 TH1F* fhTrueDCAxyBid = nullptr;
 TH1F* fhTrueDCAzA = nullptr;
+
+TEfficiency* feVertexZ = {nullptr};
+TEfficiency* feP[kNoOfSpecies] = {nullptr};
+TEfficiency* fePt[kNoOfSpecies] = {nullptr};
+TEfficiency* fePtPos[kNoOfSpecies] = {nullptr};
+TEfficiency* fePtNeg[kNoOfSpecies] = {nullptr};
 } // namespace filteranalysistask
 
 namespace filteranalysistaskqa
@@ -825,7 +832,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
     LOGF(MATCHRECGENLOGCOLLISIONS, "Accepted %d generated particles", acceptedparticles);
   }
 
-  void init(InitContext const&)
+  void init(InitContext& ic)
   {
     using namespace filteranalysistask;
 
@@ -1048,6 +1055,77 @@ struct DptDptCorrelationsFilterAnalysisTask {
         fOutputList->Add(fhTruePtNegA[sp]);
       }
     }
+
+    /* register and handle the effciciency extraction */
+    if (fDataType == kMC) {
+      feVertexZ = new TEfficiency("EfficiencyVertexZ", "eff; z_{vtx}", zvtxbins, zvtxlow, zvtxup);
+      fOutputList->Add(feVertexZ);
+      for (int sp = 0; sp < kNoOfSpecies; ++sp) {
+        feP[sp] = new TEfficiency(TString::Format("EfficiencyP_%s", speciesName[sp]).Data(),
+                                  TString::Format("#it{p} efficiency %s;#it{p} (GeV/c);eff", speciesTitle[sp]).Data(),
+                                  ptbins, ptlow, ptup);
+        fePt[sp] = new TEfficiency(TString::Format("EfficiencyPt_%s", speciesName[sp]),
+                                   TString::Format("#it{p}_{T} efficiency %s;#it{p}_{T} (GeV/c);eff", speciesTitle[sp]).Data(),
+                                   ptbins, ptlow, ptup);
+        fePtPos[sp] = new TEfficiency(TString::Format("EfficiencyPtPos_%s", speciesName[sp]),
+                                      TString::Format("#it{p}_{T} efficiency %s^{#plus};#it{p}_{T} (GeV/c);eff", speciesTitle[sp]).Data(),
+                                      ptbins, ptlow, ptup);
+        fePtNeg[sp] = new TEfficiency(TString::Format("EfficiencyPtNeg_%s", speciesName[sp]),
+                                      TString::Format("#it{p}_{T} efficiency %s^{#minus};#it{p}_{T} (GeV/c);eff", speciesTitle[sp]).Data(),
+                                      ptbins, ptlow, ptup);
+      }
+      for (int sp = 0; sp < kNoOfSpecies; ++sp) {
+        fOutputList->Add(feP[sp]);
+        fOutputList->Add(fePt[sp]);
+        fOutputList->Add(fePtPos[sp]);
+        fOutputList->Add(fePtNeg[sp]);
+      }
+      ic.services().get<CallbackService>().set(CallbackService::Id::Stop, [&]() {
+        bool mForceEfficiency = true;
+        LOGF(info, "Stop routine");
+        if (not feVertexZ->SetPassedHistogram(*fhVertexZA, "")) {
+          LOGF(error, "Efficiency vertexZ histograms not consistent");
+          for (int i = 0; i < fhVertexZA->GetNbinsX(); ++i) {
+            LOGF(info, "  Vertex z bin %d: reconstructed %f, generated %f", i, fhVertexZA->GetBinContent(i + 1), fhTrueVertexZA->GetBinContent(i + 1));
+          }
+        } else {
+          for (int i = 0; i < fhVertexZA->GetNbinsX(); ++i) {
+            LOGF(info, "  Vertex z bin %d: reconstructed %f, generated %f, pased %f and total %f",
+                 i,
+                 fhVertexZA->GetBinContent(i + 1),
+                 fhTrueVertexZA->GetBinContent(i + 1),
+                 feVertexZ->GetCopyPassedHisto()->GetBinContent(i + 1),
+                 feVertexZ->GetTotalHistogram()->GetBinContent(i + 1));
+          }
+        }
+        for (int sp = 0; sp < kNoOfSpecies; ++sp) {
+          if (feP[sp]->CheckConsistency(*fhPA[sp], *fhTruePA[sp]) or mForceEfficiency) {
+            feP[sp]->SetPassedHistogram(*fhPA[sp], "f");
+            feP[sp]->SetTotalHistogram(*fhTruePA[sp], "f");
+          } else {
+            LOGF(error, "Efficiency p histograms not consistent for species %d", int(sp));
+          }
+          if (fePt[sp]->CheckConsistency(*fhPtA[sp], *fhTruePtA[sp]) or mForceEfficiency) {
+            fePt[sp]->SetPassedHistogram(*fhPtA[sp], "f");
+            fePt[sp]->SetTotalHistogram(*fhTruePtA[sp], "f");
+          } else {
+            LOGF(error, "Efficiency pT histograms not consistent for species %d", int(sp));
+          }
+          if (fePtPos[sp]->CheckConsistency(*fhPtPosA[sp], *fhTruePtPosA[sp]) or mForceEfficiency) {
+            fePtPos[sp]->SetPassedHistogram(*fhPtPosA[sp], "f");
+            fePtPos[sp]->SetTotalHistogram(*fhTruePtPosA[sp], "f");
+          } else {
+            LOGF(error, "Efficiency pT+ histograms not consistent for species %d", int(sp));
+          }
+          if (fePtNeg[sp]->CheckConsistency(*fhPtNegA[sp], *fhTruePtNegA[sp]) or mForceEfficiency) {
+            fePtNeg[sp]->SetPassedHistogram(*fhPtNegA[sp], "f");
+            fePtNeg[sp]->SetTotalHistogram(*fhTruePtNegA[sp], "f");
+          } else {
+            LOGF(error, "Efficiency pT- histograms not consistent for species %d", int(sp));
+          }
+        }
+      });
+    }
   }
 
   using FullTracksPID = soa::Join<aod::Tracks, aod::McTrackLabels, aod::TracksCov, aod::TracksExtra, aod::TracksExtended, aod::TrackSelection, aod::pidTPCEl, aod::pidTPCMu, aod::pidTPCPi, aod::pidTPCKa, aod::pidTPCPr, aod::pidTOFEl, aod::pidTOFMu, aod::pidTOFPi, aod::pidTOFKa, aod::pidTOFPr>;
@@ -1137,6 +1215,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
         acceptedevent = true;
         fhTrueCentMultA->Fill(cent);
         fhTrueVertexZA->Fill(mccollision.posZ());
+        feVertexZ->Fill(false, mccollision.posZ()); /* in principle only total events */
         acceptedtrueevents(mccollision.bcId(), mccollision.posZ(), (uint8_t)acceptedevent, cent);
 
         filterParticles(mcparticles, collision, acceptedtrueevents.lastIndex());
@@ -1170,6 +1249,7 @@ struct DptDptCorrelationsFilterAnalysisTask {
       acceptedevent = true;
       fhTrueCentMultA->Fill(centormult);
       fhTrueVertexZA->Fill(mccollision.posZ());
+      feVertexZ->Fill(false, mccollision.posZ()); /* in principle only total events */
       acceptedtrueevents(mccollision.bcId(), mccollision.posZ(), (uint8_t)acceptedevent, centormult);
 
       filterParticles(mcparticles, mccollision, acceptedtrueevents.lastIndex());
