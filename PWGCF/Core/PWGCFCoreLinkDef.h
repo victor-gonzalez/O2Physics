@@ -13,11 +13,11 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class o2::analysis::EventSelectionCuts + ;
-#pragma link C++ class o2::analysis::DptDptBinningCuts + ;
-#pragma link C++ class o2::analysis::CheckRangeCfg + ;
-#pragma link C++ class o2::analysis::TrackSelectionCfg + ;
-#pragma link C++ class o2::analysis::SimpleInclusiveCut + ;
+#pragma link C++ class o2::analysis::PWGCF::EventSelectionCuts + ;
+#pragma link C++ class o2::analysis::PWGCF::DptDptBinningCuts + ;
+#pragma link C++ class o2::analysis::PWGCF::CheckRangeCfg + ;
+#pragma link C++ class o2::analysis::PWGCF::TrackSelectionCfg + ;
+#pragma link C++ class o2::analysis::PWGCF::SimpleInclusiveCut + ;
 #pragma link C++ class CorrelationContainer + ;
 #pragma link C++ class o2::analysis::PWGCF::CutBrick < float> + ;
 #pragma link C++ class o2::analysis::PWGCF::CutBrick < int> + ;
