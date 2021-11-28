@@ -457,15 +457,7 @@ class TrackSelectionBrick : public SpecialCutBrick
   void SetMaxDcaZ(float maxDcaZ) { mMaxDcaZ = maxDcaZ; }
 
   void SetMaxDcaXYPtDep(std::function<float(float)> ptDepCut) { mMaxDcaXYPtDep = ptDepCut; }
-  void SetRequireHitsInITSLayers(int8_t minNRequiredHits, std::set<uint8_t> requiredLayers)
-  {
-    // layer 0 corresponds to the the innermost ITS layer
-    if (minNRequiredHits > requiredLayers.size()) {
-      LOGF(FATAL, "More ITS hits required than layers specified.");
-    } else {
-      mRequiredITSHits.push_back(std::make_pair(minNRequiredHits, requiredLayers));
-    }
-  }
+  void SetRequireHitsInITSLayers(int8_t minNRequiredHits, std::set<uint8_t> requiredLayers) { mRequiredITSHits.push_back(std::make_pair(minNRequiredHits, requiredLayers)); }
   void SetRequireNoHitsInITSLayers(std::set<uint8_t> excludedLayers) { mRequiredITSHits.push_back(std::make_pair(-1, excludedLayers)); }
   void ResetITSRequirements() { mRequiredITSHits.clear(); }
 

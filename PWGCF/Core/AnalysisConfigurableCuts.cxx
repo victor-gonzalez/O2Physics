@@ -449,7 +449,7 @@ CutBrickSelectorMultipleRanges<TValueToFilter>::CutBrickSelectorMultipleRanges(c
   }
   title += "}";
   this->SetTitle(title.Data());
-  for (int i = 1; i < mEdges.size(); ++i) {
+  for (unsigned int i = 1; i < mEdges.size(); ++i) {
     mActive.push_back(false);
   }
 }
@@ -489,7 +489,7 @@ void CutBrickSelectorMultipleRanges<TValueToFilter>::ConstructCutFromString(cons
     for (int i = 0; i < tokens->GetEntries(); ++i) {
       mEdges.push_back(TValueToFilter(TString(tokens->At(i)->GetName()).Atof()));
     }
-    for (int i = 1; i < mEdges.size(); ++i) {
+    for (unsigned int i = 1; i < mEdges.size(); ++i) {
       mActive.push_back(false);
     }
     delete tokens;
@@ -504,7 +504,7 @@ std::vector<bool> CutBrickSelectorMultipleRanges<TValueToFilter>::Filter(const T
 {
   if ((mEdges.front() <= value) and (value < mEdges.back())) {
     this->mState = this->kACTIVE;
-    for (int i = 0; i < mActive.size(); ++i) {
+    for (unsigned int i = 0; i < mActive.size(); ++i) {
       if (value < mEdges[i + 1]) {
         mActive[i] = true;
       } else {
@@ -513,7 +513,7 @@ std::vector<bool> CutBrickSelectorMultipleRanges<TValueToFilter>::Filter(const T
     }
   } else {
     this->mState = this->kPASSIVE;
-    for (int i = 0; i < mActive.size(); ++i) {
+    for (unsigned int i = 0; i < mActive.size(); ++i) {
       mActive[i] = false;
     }
   }
@@ -668,7 +668,6 @@ std::vector<bool> CutWithVariations<TValueToFilter>::Filter(const TValueToFilter
 {
   std::vector<bool> res;
   res.reserve(Length());
-  bool active = false;
   for (int i = 0; i < mDefaultBricks.GetEntries(); ++i) {
     std::vector<bool> tmp = ((CutBrick<TValueToFilter>*)mDefaultBricks.At(i))->Filter(value);
     res.insert(res.end(), tmp.begin(), tmp.end());

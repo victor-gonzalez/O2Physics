@@ -125,7 +125,7 @@ CentMultEstimatorType fCentMultEstimator = kV0M;
 TriggerSelectionType fTriggerSelection = kMB;
 
 /* adaptations for the pp nightly checks */
-analysis::CheckRangeCfg traceDCAOutliers;
+analysis::PWGCF::CheckRangeCfg traceDCAOutliers;
 bool traceOutOfSpeciesParticles = false;
 int recoIdMethod = 0;
 bool useOwnTrackSelection = false;

@@ -70,7 +70,7 @@ const char* speciesName[kDptDptNoOfSpecies] = {"h", "e", "mu", "pi", "ka", "p"};
 
 const char* speciesTitle[kDptDptNoOfSpecies] = {"", "e", "#mu", "#pi", "K", "p"};
 
-TrackSelectionFilterAndAnalysis* fTrackFilter = nullptr;
+PWGCF::TrackSelectionFilterAndAnalysis* fTrackFilter = nullptr;
 
 //============================================================================================
 // The DptDptFilter output objects
@@ -441,7 +441,7 @@ struct DptDptFilter {
     traceCollId0 = cfgTraceCollId0;
 
     /* track filtering configuration */
-    fTrackFilter = new TrackSelectionFilterAndAnalysis(TString(cfgTrackFilterString));
+    fTrackFilter = new PWGCF::TrackSelectionFilterAndAnalysis(TString(cfgTrackFilterString));
 
     /* if the system type is not known at this time, we have to put the initalization somewhere else */
     fSystem = getSystemType(cfgSystem);
