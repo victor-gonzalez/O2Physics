@@ -26,12 +26,47 @@ namespace analysis
 namespace PWGCF
 {
 
+///\brief Convenince class for configurable access
+class TrackSelectionConfigurable
+{
+ public:
+  TrackSelectionConfigurable(std::string ttype = "",
+                             std::string nclstpc = "",
+                             std::string nxrtpc = "",
+                             std::string nclsits = "",
+                             std::string chi2clustpc = "",
+                             std::string chi2clusits = "",
+                             std::string xrofctpc = "",
+                             std::string dcaxy = "",
+                             std::string dcaz = "")
+    : mTrackTypes{ttype}, mNClustersTPC{nclstpc}, mNCrossedRowsTPC{nxrtpc}, mNClustersITS{nclsits}, mMaxChi2PerClusterTPC{chi2clustpc}, mMaxChi2PerClusterITS{chi2clusits}, mMinNCrossedRowsOverFindableClustersTPC{xrofctpc}, mMaxDcaXY{dcaxy}, mMaxDcaZ{dcaz}
+  {
+  }
+
+ private:
+  std::string mTrackTypes = "";                             /// the track types to select list
+  std::string mNClustersTPC = "";                           //! the number of TPC clusters cuts
+  std::string mNCrossedRowsTPC = "";                        //! the number of TPC crossed rows cuts
+  std::string mNClustersITS = "";                           //! the number of ITS clusters cuts
+  std::string mMaxChi2PerClusterTPC = "";                   //! the max Chi2 per TPC cluster cuts
+  std::string mMaxChi2PerClusterITS = "";                   //! the max Chi2 per ITS cluster cuts
+  std::string mMinNCrossedRowsOverFindableClustersTPC = ""; //! the min ration crossed TPC rows over findable TPC clusters cuts
+  std::string mMaxDcaXY = "";                               //! the DCAxy cuts
+  std::string mMaxDcaZ = "";                                //! the DCAz cuts
+  std::string mPtRange = "";                                //! the pT range cuts
+  std::string mEtaRange = "";                               //! the eta range cuts
+
+ private:
+  ClassDefNV(TrackSelectionConfigurable, 1);
+};
+
 /// \brief Filter of tracks and track selection once filetered
 class TrackSelectionFilterAndAnalysis : public TNamed
 {
  public:
   TrackSelectionFilterAndAnalysis();
   TrackSelectionFilterAndAnalysis(const TString&);
+  TrackSelectionFilterAndAnalysis(const TrackSelectionConfigurable&);
 
   void SetPtRange(const TString&);
   void SetEtaRange(const TString&);

@@ -159,9 +159,19 @@ struct DptDptFilter {
   Configurable<int> cfgRecoIdMethod{"recoidmethod", 0, "Method for identifying reconstructed tracks: 0 No PID, 1 PID, 2 mcparticle. Default 0"};
   Configurable<o2::analysis::PWGCF::TrackSelectionCfg> cfgTrackSelection{"tracksel", {false, false, 0, 70, 0.8, 2.4, 3.2}, "Track selection: {useit: true/false, ongen: true/false, tpccls, tpcxrws, tpcxrfc, dcaxy, dcaz}. Default {false,0.70.0.8,2.4,3.2}"};
   Configurable<bool> cfgTraceCollId0{"tracecollid0", false, "Trace particles in collisions id 0. Default false"};
-  Configurable<std::string> cfgTrackFilterString{"trackfilter",
-                                                 "tracksel{ttype{FB1,FB32,FB64};nclstpc{cwv{th{70};th{80},th{90}}},chi2clustpc{cwv{lim{4};lim{3},lim{90}}}}",
-                                                 "Check documentation for more info"};
+  struct : ConfigurableGroup {
+    Configurable<std::string> ttype{"trkflt_ttype", "ttype{FB1,FB32,FB64}", "Track types to filter"};
+    Configurable<std::string> nclstpc{"trkflt_nclstpc", "nclstpc{cwv{th{70};th{80},th{90}}}", "Min no of TPC clusters: nclstpc{th{70}} or nclstpc{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> nxrtpc{"trkflt_nxrtpc", "nxrtpc{}", "Min no of TPC crossed rows: nxrtpc{th{70}} or nxrtpc{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> nclsits{"trkflt_nclsits", "nclsits{}", "Min no of ITS clusters: nclsits{th{3}} or nclsits{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> chi2clustpc{"trkflt_chi2clustpc", "chi2clustpc{cwv{lim{4};lim{3},lim{90}}}", "Max Chi^2 per TPC cluster: chi2clustpc{lim{4}} or chi2clustpc{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> chi2clusits{"trkflt_chi2clusits", "chi2clusits{}", "Max Chi^2 per ITS cluster: chi2clusits{lim{4}} or chi2clusits{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> xrofctpc{"trkflt_xrofctpc", "xrofctpc{}", "Min no of TPC crossed rows over findable clusters: xrofctpc{th{0.70}} or xrofctpc{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> dcaxy{"trkflt_dcaxy", "dcaxy{}", "Max DCAxy: dcaxy{lim{2.3}} or dcaxy{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> dcaz{"trkflt_dcaz", "dcaz{}", "Max DCAz: dcaz{lim{3.0}} or dcaz{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> ptrange{"trkflt_pt", "pT{rg{0.2,10.0}}", "pT range: pT{th{0.2}} or pT{cwv{def;var1,var2,...}}"};
+    Configurable<std::string> etarange{"trkflt_eta", "eta{rg{-0.8,0.8}}", "eta range: eta{rg{-0.9,0.9}} or eta{cwv{def;var1,var2,...}}"};
+  } trackfilter;
 
   OutputObj<TList> fOutput{"DptDptFilterGlobalInfo", OutputObjHandlingPolicy::AnalysisObject};
 
@@ -441,7 +451,9 @@ struct DptDptFilter {
     traceCollId0 = cfgTraceCollId0;
 
     /* track filtering configuration */
-    fTrackFilter = new PWGCF::TrackSelectionFilterAndAnalysis(TString(cfgTrackFilterString));
+    PWGCF::TrackSelectionConfigurable trksel(trackfilter.ttype, trackfilter.nclstpc, trackfilter.nxrtpc, trackfilter.nclsits, trackfilter.chi2clustpc,
+                                             trackfilter.chi2clusits, trackfilter.xrofctpc, trackfilter.dcaxy, trackfilter.dcaz);
+    fTrackFilter = new PWGCF::TrackSelectionFilterAndAnalysis(trksel);
 
     /* if the system type is not known at this time, we have to put the initalization somewhere else */
     fSystem = getSystemType(cfgSystem);

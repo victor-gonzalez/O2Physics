@@ -13,6 +13,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
+#pragma link C++ nestedclasses;
 #pragma link C++ class o2::analysis::PWGCF::EventSelectionCuts + ;
 #pragma link C++ class o2::analysis::PWGCF::DptDptBinningCuts + ;
 #pragma link C++ class o2::analysis::PWGCF::CheckRangeCfg + ;
@@ -36,5 +37,6 @@
 #pragma link C++ class o2::analysis::PWGCF::SpecialCutBrick + ;
 #pragma link C++ class o2::analysis::PWGCF::TrackSelectionBrick + ;
 #pragma link C++ class o2::analysis::PWGCF::PIDSelectionBrick + ;
+#pragma link C++ class o2::analysis::PWGCF::TrackSelectionConfigurable + ;
 #pragma link C++ class o2::analysis::PWGCF::TrackSelectionFilterAndAnalysis + ;
 #pragma link C++ class o2::analysis::PWGCF::PIDSelectionFilterAndAnalysis + ;

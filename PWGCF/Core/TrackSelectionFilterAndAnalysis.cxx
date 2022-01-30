@@ -70,6 +70,23 @@ TrackSelectionFilterAndAnalysis::TrackSelectionFilterAndAnalysis(const TString& 
   ConstructCutFromString(cutstr);
 }
 
+/// \brief Constructor from the track selection configurable
+TrackSelectionFilterAndAnalysis::TrackSelectionFilterAndAnalysis(const TrackSelectionConfigurable& trcksel)
+  : TNamed(),
+    mNClustersTPC(nullptr),
+    mNCrossedRowsTPC(nullptr),
+    mNClustersITS(nullptr),
+    mMaxChi2PerClusterTPC(nullptr),
+    mMaxChi2PerClusterITS(nullptr),
+    mMinNCrossedRowsOverFindableClustersTPC(nullptr),
+    mMaxDcaXY(nullptr),
+    mMaxDcaZ(nullptr),
+    mMaskLength(0),
+    mSelectedMask(0UL),
+    mArmedMask(0UL)
+{
+}
+
 /// \brief Calculates the length of the mask needed to store the selection cuts
 int TrackSelectionFilterAndAnalysis::CalculateMaskLength()
 {
