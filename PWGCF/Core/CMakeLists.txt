@@ -12,13 +12,17 @@
 o2physics_add_library(PWGCFCore
                SOURCES  AnalysisConfigurableCuts.cxx
                         CorrelationContainer.cxx
+                        SelectionFilterAndAnalysis.cxx
                         TrackSelectionFilterAndAnalysis.cxx
                         PIDSelectionFilterAndAnalysis.cxx
+                        EventSelectionFilterAndAnalysis.cxx
                PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore)
 
 o2physics_target_root_dictionary(PWGCFCore
               HEADERS AnalysisConfigurableCuts.h
                       CorrelationContainer.h
+                      SelectionFilterAndAnalysis.h
                       TrackSelectionFilterAndAnalysis.h
                       PIDSelectionFilterAndAnalysis.h
+                      EventSelectionFilterAndAnalysis.h
               LINKDEF PWGCFCoreLinkDef.h)

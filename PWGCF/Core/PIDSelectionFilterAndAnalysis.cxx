@@ -27,22 +27,24 @@ using namespace boost;
 ClassImp(PIDSelectionFilterAndAnalysis);
 
 /// \brief Default constructor
-PIDSelectionFilterAndAnalysis::PIDSelectionFilterAndAnalysis() : TNamed(),
-                                                                 mPTOF(0.8f),
-                                                                 mRequireTOF(false),
-                                                                 mEllipticTPCTOF(false),
-                                                                 mInclusiveTrackPID(0),
-                                                                 mExclusiveTrackPID(0)
+PIDSelectionFilterAndAnalysis::PIDSelectionFilterAndAnalysis()
+  : SelectionFilterAndAnalysis(),
+    mPTOF(0.8f),
+    mRequireTOF(false),
+    mEllipticTPCTOF(false),
+    mInclusiveTrackPID(0),
+    mExclusiveTrackPID(0)
 {
 }
 
 /// \brief Constructor from regular expression
-PIDSelectionFilterAndAnalysis::PIDSelectionFilterAndAnalysis(const TString& cutstr) : TNamed(),
-                                                                                      mPTOF(0.8f),
-                                                                                      mRequireTOF(false),
-                                                                                      mEllipticTPCTOF(false),
-                                                                                      mInclusiveTrackPID(0),
-                                                                                      mExclusiveTrackPID(0)
+PIDSelectionFilterAndAnalysis::PIDSelectionFilterAndAnalysis(const TString& cutstr, selmodes mode)
+  : SelectionFilterAndAnalysis("", mode),
+    mPTOF(0.8f),
+    mRequireTOF(false),
+    mEllipticTPCTOF(false),
+    mInclusiveTrackPID(0),
+    mExclusiveTrackPID(0)
 {
   ConstructCutFromString(cutstr);
 }

@@ -18,6 +18,7 @@
 #include <TList.h>
 
 #include "AnalysisConfigurableCuts.h"
+#include "SelectionFilterAndAnalysis.h"
 
 namespace o2
 {
@@ -25,10 +26,14 @@ namespace analysis
 {
 namespace PWGCF
 {
+/* forward de declaration */
+class TrackSelectionFilterAndAnalysis;
 
 ///\brief Convenince class for configurable access
 class TrackSelectionConfigurable
 {
+  friend class TrackSelectionFilterAndAnalysis;
+
  public:
   TrackSelectionConfigurable(std::string ttype = "",
                              std::string nclstpc = "",
@@ -38,8 +43,20 @@ class TrackSelectionConfigurable
                              std::string chi2clusits = "",
                              std::string xrofctpc = "",
                              std::string dcaxy = "",
-                             std::string dcaz = "")
-    : mTrackTypes{ttype}, mNClustersTPC{nclstpc}, mNCrossedRowsTPC{nxrtpc}, mNClustersITS{nclsits}, mMaxChi2PerClusterTPC{chi2clustpc}, mMaxChi2PerClusterITS{chi2clusits}, mMinNCrossedRowsOverFindableClustersTPC{xrofctpc}, mMaxDcaXY{dcaxy}, mMaxDcaZ{dcaz}
+                             std::string dcaz = "",
+                             std::string ptrange = "",
+                             std::string etarange = "")
+    : mTrackTypes{ttype},
+      mNClustersTPC{nclstpc},
+      mNCrossedRowsTPC{nxrtpc},
+      mNClustersITS{nclsits},
+      mMaxChi2PerClusterTPC{chi2clustpc},
+      mMaxChi2PerClusterITS{chi2clusits},
+      mMinNCrossedRowsOverFindableClustersTPC{xrofctpc},
+      mMaxDcaXY{dcaxy},
+      mMaxDcaZ{dcaz},
+      mPtRange{ptrange},
+      mEtaRange{etarange}
   {
   }
 
@@ -61,12 +78,12 @@ class TrackSelectionConfigurable
 };
 
 /// \brief Filter of tracks and track selection once filetered
-class TrackSelectionFilterAndAnalysis : public TNamed
+class TrackSelectionFilterAndAnalysis : public SelectionFilterAndAnalysis
 {
  public:
   TrackSelectionFilterAndAnalysis();
-  TrackSelectionFilterAndAnalysis(const TString&);
-  TrackSelectionFilterAndAnalysis(const TrackSelectionConfigurable&);
+  TrackSelectionFilterAndAnalysis(const TString&, selmodes);
+  TrackSelectionFilterAndAnalysis(const TrackSelectionConfigurable&, selmodes);
 
   void SetPtRange(const TString&);
   void SetEtaRange(const TString&);
@@ -89,9 +106,6 @@ class TrackSelectionFilterAndAnalysis : public TNamed
   CutBrick<float>* mMaxDcaZ;                                //! the DCAz cuts
   CutBrick<float>* mPtRange;                                //! the pT range cuts
   CutBrick<float>* mEtaRange;                               //! the eta range cuts
-  int mMaskLength;                                          /// the length of the mask needed to filter the selection cuts
-  ULong64_t mSelectedMask = 0UL;                            /// the selection mask for the current passed track
-  ULong64_t mArmedMask = 0UL;                               /// the armed mask identifying the significative selection cuts
 
   ClassDef(TrackSelectionFilterAndAnalysis, 1)
 };

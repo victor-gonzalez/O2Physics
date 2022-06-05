@@ -23,20 +23,23 @@ namespace dptdptfilter
 {
 DECLARE_SOA_COLUMN(DptDptCFCollisionAccepted, collisionaccepted, uint8_t); //! If the collision/event has been accepted or not
 DECLARE_SOA_COLUMN(DptDptCFCollisionCentMult, centmult, float);            //! The centrality/multiplicity pecentile
+DECLARE_SOA_COLUMN(DptDptCFCollisionSelectionFlags, selflags, uint64_t);   //! The selection flags for collision selection
 } // namespace dptdptfilter
 DECLARE_SOA_TABLE(DptDptCFAcceptedCollisions, "AOD", "DPTDPTCFACCCOLL", //! Accepted reconstructed collisions/events filtered table
                   o2::soa::Index<>,
                   collision::BCId,
                   collision::PosZ,
                   dptdptfilter::DptDptCFCollisionAccepted,
-                  dptdptfilter::DptDptCFCollisionCentMult);
+                  dptdptfilter::DptDptCFCollisionCentMult,
+                  dptdptfilter::DptDptCFCollisionSelectionFlags);
 using DptDptCFAcceptedCollision = DptDptCFAcceptedCollisions::iterator;
 DECLARE_SOA_TABLE(DptDptCFAcceptedTrueCollisions, "AOD", "DPTCFACCGENCOLL", //! Accepted generated collisions/events filtered table
                   o2::soa::Index<>,
                   collision::BCId,
                   mccollision::PosZ,
                   dptdptfilter::DptDptCFCollisionAccepted,
-                  dptdptfilter::DptDptCFCollisionCentMult);
+                  dptdptfilter::DptDptCFCollisionCentMult,
+                  dptdptfilter::DptDptCFCollisionSelectionFlags);
 using DptDptCFAcceptedTrueCollision = DptDptCFAcceptedTrueCollisions::iterator;
 namespace dptdptfilter
 {
@@ -44,6 +47,7 @@ DECLARE_SOA_INDEX_COLUMN(DptDptCFAcceptedCollision, event);          //! Reconst
 DECLARE_SOA_INDEX_COLUMN(DptDptCFAcceptedTrueCollision, mcevent);    //! Generated collision/event
 DECLARE_SOA_COLUMN(TrackacceptedAsOne, trackacceptedasone, uint8_t); //! Track accepted as type one
 DECLARE_SOA_COLUMN(TrackacceptedAsTwo, trackacceptedastwo, uint8_t); //! Track accepted as type two
+DECLARE_SOA_COLUMN(TrackSelectionFlags, trackselflags, uint64_t);    //! The selection flags for track selection
 DECLARE_SOA_COLUMN(Pt, pt, float);                                   //! The track transverse momentum
 DECLARE_SOA_COLUMN(Eta, eta, float);                                 //! The track pseudorapidity
 DECLARE_SOA_COLUMN(Phi, phi, float);                                 //! The track azimuthal angle
@@ -56,6 +60,7 @@ DECLARE_SOA_TABLE(ScannedTracks, "AOD", "SCANNEDTRACKS", //! The reconstructed t
                   dptdptfilter::DptDptCFAcceptedCollisionId,
                   dptdptfilter::TrackacceptedAsOne,
                   dptdptfilter::TrackacceptedAsTwo,
+                  dptdptfilter::TrackSelectionFlags,
                   dptdptfilter::Pt,
                   dptdptfilter::Eta,
                   dptdptfilter::Phi,
@@ -64,6 +69,7 @@ DECLARE_SOA_TABLE(ScannedTrueTracks, "AOD", "SCANTRUETRACKS", //! The generated 
                   dptdptfilter::DptDptCFAcceptedTrueCollisionId,
                   dptdptfilter::TrackacceptedAsOne,
                   dptdptfilter::TrackacceptedAsTwo,
+                  dptdptfilter::TrackSelectionFlags,
                   dptdptfilter::Pt,
                   dptdptfilter::Eta,
                   dptdptfilter::Phi,

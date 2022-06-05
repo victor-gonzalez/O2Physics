@@ -18,6 +18,7 @@
 #include <TList.h>
 
 #include "AnalysisConfigurableCuts.h"
+#include "SelectionFilterAndAnalysis.h"
 
 namespace o2
 {
@@ -27,11 +28,11 @@ namespace PWGCF
 {
 
 /// \brief Filter of tracks based on PID and track selection once filetered
-class PIDSelectionFilterAndAnalysis : public TNamed
+class PIDSelectionFilterAndAnalysis : public SelectionFilterAndAnalysis
 {
  public:
   PIDSelectionFilterAndAnalysis();
-  PIDSelectionFilterAndAnalysis(const TString&);
+  PIDSelectionFilterAndAnalysis(const TString&, selmodes);
 
   void SetPTOF(float ptof) { mPTOF = ptof; }
   void SetRequireTOF(bool requiretof = false) { mRequireTOF = requiretof; }
@@ -49,9 +50,6 @@ class PIDSelectionFilterAndAnalysis : public TNamed
   bool mEllipticTPCTOF = false;                       ///< 2D nsigmas elliptic TPC+TOF
   std::vector<PIDSelectionBrick*> mInclusiveTrackPID; ///< the list of species wanted to be detected
   std::vector<PIDSelectionBrick*> mExclusiveTrackPID; ///< the list of species wanted to be rejected
-  int mMaskLength;                                    /// the length of the mask needed to filter the selection cuts
-  ULong64_t mSelectedMask = 0UL;                      /// the selection mask for the current passed track
-  ULong64_t mArmedMask = 0UL;                         /// the armed mask identifying the significative selection cuts
 
   ClassDef(PIDSelectionFilterAndAnalysis, 1)
 };
