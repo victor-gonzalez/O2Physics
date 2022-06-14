@@ -592,7 +592,7 @@ void CutWithVariations<TValueToFilter>::ConstructCutFromString(const TString& cu
   {
     TObjArray* lev2toks = TString(lev1toks->At(0)->GetName()).Tokenize(",");
     if (lev2toks->GetEntries() > 1) {
-      /* TODO: severa default options for track type and for track pid selection */
+      /* TODO: several default options for track type and for track pid selection */
       Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, several defaults only for trktype or trkpid pending of implementation", cutstr.Data());
     }
     std::set<std::string> allowed = {"lim", "th", "rg", "xrg"};
@@ -605,8 +605,27 @@ void CutWithVariations<TValueToFilter>::ConstructCutFromString(const TString& cu
   if (lev1toks->GetEntries() > 1) {
     TObjArray* lev2toks = TString(lev1toks->At(1)->GetName()).Tokenize(",");
     std::set<std::string> allowed = {"lim", "th", "rg", "xrg"};
+    int narmed = 0;
     for (int i = 0; i < lev2toks->GetEntries(); ++i) {
-      mVariationBricks.Add(CutBrick<TValueToFilter>::constructBrick(m[1].str().c_str(), lev2toks->At(i)->GetName(), allowed));
+      /* let's handle the different activations */
+      TString variation = lev2toks->At(i)->GetName();
+      bool isarmed = variation.EndsWith("-yes");
+      if (isarmed) {
+        narmed++;
+        variation.Remove(variation.Index("-yes", strlen("-yes")));
+      } else {
+        if (variation.EndsWith("-no")) {
+          variation.Remove(variation.Index("-no", strlen("-no")));
+        } else {
+          Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, alternatives not correctly flagged", cutstr.Data());
+        }
+      }
+      CutBrick<TValueToFilter>* brick = CutBrick<TValueToFilter>::constructBrick(m[1].str().c_str(), variation, allowed);
+      brick->Arm(isarmed);
+      mVariationBricks.Add(brick);
+    }
+    if (narmed > 1) {
+      Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, more than one alternative flagged", cutstr.Data());
     }
     delete lev2toks;
   }

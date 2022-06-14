@@ -161,7 +161,6 @@ class CutBrick : public TNamed
   static CutBrick<TValueToFilter>* constructBrick(const char* name, const char* regex, const std::set<std::string>& allowed);
   static const char* mgImplementedbricks[];
 
- protected:
   /// Set the status of the cut significative (or not) for the selection chain
   void Arm(bool doit = true) { doit ? mMode = kSELECTED : mMode = kUNSELECTED; }
 
