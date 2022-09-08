@@ -8,8 +8,8 @@
 // In applying this license CERN does not waive the privileges and immunities
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
-#ifndef O2_ANALYSIS_DPTDPTFILTERCONF_H
-#define O2_ANALYSIS_DPTDPTFILTERCONF_H
+#ifndef O2_ANALYSIS_DPTDPTSKIMCONF_H
+#define O2_ANALYSIS_DPTDPTSKIMCONF_H
 
 #include "Framework/AnalysisTask.h"
 #include "Framework/ASoAHelpers.h"
@@ -42,4 +42,4 @@ struct : ConfigurableGroup {
 
 } pidfilter;
 
-#endif // O2_ANALYSIS_DPTDPTFILTERCONF_H
+#endif // O2_ANALYSIS_DPTDPTSKIMCONF_H

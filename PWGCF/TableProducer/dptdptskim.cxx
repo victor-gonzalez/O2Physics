@@ -34,7 +34,7 @@ using namespace dptdptskimming;
 
 struct DptDptSkim {
 
-#include "dptdptfilterconf.h"
+#include "dptdptskimconf.h"
 
   int nReportedTracks;
 
