@@ -70,8 +70,6 @@ const char* speciesName[kDptDptNoOfSpecies] = {"h", "e", "mu", "pi", "ka", "p"};
 
 const char* speciesTitle[kDptDptNoOfSpecies] = {"", "e", "#mu", "#pi", "K", "p"};
 
-PWGCF::TrackSelectionFilterAndAnalysis* fTrackFilter = nullptr;
-
 //============================================================================================
 // The DptDptFilter output objects
 //============================================================================================
@@ -160,8 +158,6 @@ struct DptDptFilter {
   Configurable<o2::analysis::PWGCF::TrackSelectionCfg> cfgTrackSelection{"tracksel", {false, false, 0, 70, 0.8, 2.4, 3.2}, "Track selection: {useit: true/false, ongen: true/false, tpccls, tpcxrws, tpcxrfc, dcaxy, dcaz}. Default {false,0.70.0.8,2.4,3.2}"};
   Configurable<bool> cfgTraceCollId0{"tracecollid0", false, "Trace particles in collisions id 0. Default false"};
   OutputObj<TList> fOutput{"DptDptFilterGlobalInfo", OutputObjHandlingPolicy::AnalysisObject};
-
-#include "dptdptfilterconf.h"
 
   Produces<aod::DptDptCFAcceptedCollisions> acceptedcollisions;
   Produces<aod::ScannedTracks> scannedtracks;
@@ -437,11 +433,6 @@ struct DptDptFilter {
       useOwnTrackSelection = false;
     }
     traceCollId0 = cfgTraceCollId0;
-
-    /* track filtering configuration */
-    PWGCF::TrackSelectionConfigurable trksel(trackfilter.ttype, trackfilter.nclstpc, trackfilter.nxrtpc, trackfilter.nclsits, trackfilter.chi2clustpc,
-                                             trackfilter.chi2clusits, trackfilter.xrofctpc, trackfilter.dcaxy, trackfilter.dcaz);
-    fTrackFilter = new PWGCF::TrackSelectionFilterAndAnalysis(trksel, PWGCF::SelectionFilterAndAnalysis::kFilter);
 
     /* if the system type is not known at this time, we have to put the initalization somewhere else */
     fSystem = getSystemType(cfgSystem);

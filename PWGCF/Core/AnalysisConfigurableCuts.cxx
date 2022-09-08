@@ -66,6 +66,7 @@ const char* CutBrick<TValueToFilter>::mgImplementedbricks[] = {"lim", "th", "rg"
 template <typename TValueToFilter>
 CutBrick<TValueToFilter>* CutBrick<TValueToFilter>::constructBrick(const char* name, const char* regex, const std::set<std::string>& allowed)
 {
+  LOGF(info, "Construct brick %s from RE %s", name, regex);
   CutBrick<TValueToFilter>* thebrick = nullptr;
 
   bool found = false;
@@ -157,6 +158,8 @@ CutBrickLimit<TValueToFilter>::CutBrickLimit(const TString& cutstr)
 template <typename TValueToFilter>
 void CutBrickLimit<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
+  LOGF(info, "Cut string: %s", cutstr.Data());
+
   std::regex cutregex("^(\\w+)\\{lim\\{((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
@@ -230,6 +233,8 @@ CutBrickThreshold<TValueToFilter>::CutBrickThreshold(const TString& cutstr)
 template <typename TValueToFilter>
 void CutBrickThreshold<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
+  LOGF(info, "Cut string: %s", cutstr.Data());
+
   std::regex cutregex("^(\\w+)\\{th\\{((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
@@ -307,6 +312,8 @@ CutBrickRange<TValueToFilter>::CutBrickRange(const TString& cutstr)
 template <typename TValueToFilter>
 void CutBrickRange<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
+  LOGF(info, "Cut string: %s", cutstr.Data());
+
   std::regex cutregex("^(\\w+)\\{rg\\{((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+)),((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
@@ -385,6 +392,8 @@ CutBrickExtToRange<TValueToFilter>::CutBrickExtToRange(const TString& cutstr)
 template <typename TValueToFilter>
 void CutBrickExtToRange<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
+  LOGF(info, "Cut string: %s", cutstr.Data());
+
   std::regex cutregex("^(\\w+)\\{xrg\\{((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+)),((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
@@ -472,6 +481,8 @@ CutBrickSelectorMultipleRanges<TValueToFilter>::CutBrickSelectorMultipleRanges(c
 template <typename TValueToFilter>
 void CutBrickSelectorMultipleRanges<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
+  LOGF(info, "Cut string: %s", cutstr.Data());
+
   std::regex cutregex("^(\\w+)\\{mrg\\{((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))((?:,((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))){2,})}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
@@ -572,62 +583,70 @@ template <typename TValueToFilter>
 void CutWithVariations<TValueToFilter>::ConstructCutFromString(const TString& cutstr)
 {
   /* let's catch the first level */
-  std::regex cutregex("^(\\w+)\\{cwv\\{([\\w\\d.,;{}]+)}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
+  LOGF(info, "Cut with variations: cut string: %s", cutstr.Data());
+
+  std::regex cutregex("^(\\w+)\\{cwv\\{([\\w\\d.,:{}-]+)}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
 
-  std::regex_search(in, m, cutregex);
-  if (m.empty() or (m.size() < 3)) {
+  bool res = std::regex_search(in, m, cutregex);
+  if (not res or m.empty() or (m.size() < 3)) {
     Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, use pT{cwv{rg{0.2,10.0}}} for instance", cutstr.Data());
   }
   this->SetName(m[1].str().c_str());
   this->SetTitle(cutstr.Data());
 
   /* let's split default and variations */
-  TObjArray* lev1toks = TString(m[2]).Tokenize(";");
+  TObjArray* lev1toks = TString(m[2]).Tokenize(":");
   if (lev1toks->GetEntries() > 2) {
     Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, use pT{cwv{rg{0.2,10.0}}} for instance", cutstr.Data());
   }
+  auto addCuts = [&](TList& cutlist, std::string cuttxt, bool reqflag) {
+    std::smatch m;
+    while (cuttxt.length() > 0) {
+      std::set<std::string> allowed = {"lim", "th", "rg", "xrg"};
+      std::regex cutregex("(\\w+\\{[\\w.,-]+}(?:-(?:no|yes))*)");
+      bool res = regex_search(cuttxt, m, cutregex);
+      if (not res or m.empty() or m.size() != 2) {
+        Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Cut with variations malformed RE %s", cuttxt.c_str());
+      }
+      TString brickre = m[1].str().c_str();
+      bool isarmed = brickre.EndsWith("-yes");
+      if (isarmed) {
+        brickre.Remove(brickre.Index("-yes"), strlen("-yes"));
+      } else if (brickre.EndsWith("-no")) {
+        brickre.Remove(brickre.Index("-no"), strlen("-no"));
+      } else if (reqflag) {
+        Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, alternatives not correctly flagged", cuttxt.c_str());
+      }
+      CutBrick<TValueToFilter>* brick = CutBrick<TValueToFilter>::constructBrick(this->GetName(), brickre, allowed);
+      brick->Arm(isarmed);
+      cutlist.Add(brick);
+      cuttxt = m.suffix();
+    }
+  };
   /* let's handle the default values */
   {
-    TObjArray* lev2toks = TString(lev1toks->At(0)->GetName()).Tokenize(",");
-    if (lev2toks->GetEntries() > 1) {
+    LOGF(info, "Cut with variations, extracting defaults: cut string: %s", lev1toks->At(0)->GetName());
+    addCuts(mDefaultBricks, lev1toks->At(0)->GetName(), false);
+    if (mDefaultBricks.GetEntries() > 1) {
       /* TODO: several default options for track type and for track pid selection */
       Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, several defaults only for trktype or trkpid pending of implementation", cutstr.Data());
     }
-    std::set<std::string> allowed = {"lim", "th", "rg", "xrg"};
-    for (int i = 0; i < lev2toks->GetEntries(); ++i) {
-      mDefaultBricks.Add(CutBrick<TValueToFilter>::constructBrick(m[1].str().c_str(), lev2toks->At(i)->GetName(), allowed));
-    }
-    delete lev2toks;
   }
   /* let's now handle the variations if any */
   if (lev1toks->GetEntries() > 1) {
-    TObjArray* lev2toks = TString(lev1toks->At(1)->GetName()).Tokenize(",");
-    std::set<std::string> allowed = {"lim", "th", "rg", "xrg"};
+    LOGF(info, "Cut with variations, extracting variations: cut string: %s", lev1toks->At(1)->GetName());
+    addCuts(mVariationBricks, lev1toks->At(1)->GetName(), true);
     int narmed = 0;
-    for (int i = 0; i < lev2toks->GetEntries(); ++i) {
-      /* let's handle the different activations */
-      TString variation = lev2toks->At(i)->GetName();
-      bool isarmed = variation.EndsWith("-yes");
-      if (isarmed) {
+    for (auto cut : mVariationBricks) {
+      if (((CutBrick<TValueToFilter>*)cut)->IsArmed()) {
         narmed++;
-        variation.Remove(variation.Index("-yes", strlen("-yes")));
-      } else {
-        if (variation.EndsWith("-no")) {
-          variation.Remove(variation.Index("-no", strlen("-no")));
-        } else {
-          Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, alternatives not correctly flagged", cutstr.Data());
-        }
       }
-      CutBrick<TValueToFilter>* brick = CutBrick<TValueToFilter>::constructBrick(m[1].str().c_str(), variation, allowed);
-      brick->Arm(isarmed);
-      mVariationBricks.Add(brick);
     }
     if (narmed > 1) {
       Fatal("CutWithVariations<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, more than one alternative flagged", cutstr.Data());
     }
-    delete lev2toks;
   }
   delete lev1toks;
 }

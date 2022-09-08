@@ -420,12 +420,12 @@ class TrackSelectionBrick : public SpecialCutBrick
   bool Filter(TrackToFilter const& track)
   {
     if ((track.trackType() == mTrackType) &&
-        (mCheckNClustersTPC && (track.tpcNClsFound() >= mMinNClustersTPC)) &&
-        (mCheckNCrossedRowsTPC && (track.tpcNClsCrossedRows() >= mMinNCrossedRowsTPC)) &&
-        (mCheckMinNCrossedRowsOverFindableClustersTPC && (track.tpcCrossedRowsOverFindableCls() >= mMinNCrossedRowsOverFindableClustersTPC)) &&
-        (mCheckNClustersITS && (track.itsNCls() >= mMinNClustersITS)) &&
-        (mCheckMaxChi2PerClusterITS && (track.itsChi2NCl() <= mMaxChi2PerClusterITS)) &&
-        (mCheckMaxChi2PerClusterTPC && (track.tpcChi2NCl() <= mMaxChi2PerClusterTPC)) &&
+        (not mCheckNClustersTPC or (track.tpcNClsFound() >= mMinNClustersTPC)) &&
+        (not mCheckNCrossedRowsTPC or (track.tpcNClsCrossedRows() >= mMinNCrossedRowsTPC)) &&
+        (not mCheckMinNCrossedRowsOverFindableClustersTPC or (track.tpcCrossedRowsOverFindableCls() >= mMinNCrossedRowsOverFindableClustersTPC)) &&
+        (not mCheckNClustersITS or (track.itsNCls() >= mMinNClustersITS)) &&
+        (not mCheckMaxChi2PerClusterITS or (track.itsChi2NCl() <= mMaxChi2PerClusterITS)) &&
+        (not mCheckMaxChi2PerClusterTPC or (track.tpcChi2NCl() <= mMaxChi2PerClusterTPC)) &&
         ((mRequireITSRefit) ? (track.flags() & o2::aod::track::ITSrefit) : true) &&
         ((mRequireTPCRefit) ? (track.flags() & o2::aod::track::TPCrefit) : true) &&
         ((mRequireGoldenChi2) ? (track.flags() & o2::aod::track::GoldenChi2) : true) &&

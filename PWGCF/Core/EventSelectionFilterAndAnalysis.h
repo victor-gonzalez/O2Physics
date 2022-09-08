@@ -26,10 +26,14 @@ namespace analysis
 {
 namespace PWGCF
 {
+/* forward declaration */
+class EventSelectionFilterAndAnalysis;
 
 ///\brief Convenince class for configurable access
 class EventSelectionConfigurable
 {
+  friend class EventSelectionFilterAndAnalysis;
+
  public:
   EventSelectionConfigurable(std::string multsel = "",
                              std::string trigsel = "",
@@ -89,8 +93,9 @@ uint64_t EventSelectionFilterAndAnalysis::Filter(CollisionToFilter const& col)
     std::vector<bool> res = brick->Filter(value);
     for (auto b : res) {
       if (b) {
-        SETBIT(selectedMask, bit++);
+        SETBIT(selectedMask, bit);
       }
+      bit++;
     }
   };
 

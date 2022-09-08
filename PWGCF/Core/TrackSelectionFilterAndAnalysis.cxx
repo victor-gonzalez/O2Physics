@@ -76,7 +76,9 @@ TrackSelectionFilterAndAnalysis::TrackSelectionFilterAndAnalysis(const TrackSele
     mMaxChi2PerClusterITS(nullptr),
     mMinNCrossedRowsOverFindableClustersTPC(nullptr),
     mMaxDcaXY(nullptr),
-    mMaxDcaZ(nullptr)
+    mMaxDcaZ(nullptr),
+    mPtRange(nullptr),
+    mEtaRange(nullptr)
 {
   /* we own the track types cuts objects */
   mTrackTypes.SetOwner(true);
@@ -93,10 +95,16 @@ TrackSelectionFilterAndAnalysis::TrackSelectionFilterAndAnalysis(const TrackSele
       trcksel.mPtRange.size() > 0 or
       trcksel.mEtaRange.size() > 0) {
     cutString += ";";
+    bool first = true;
 
-    auto appendCut = [&cutString](std::string str) {
+    auto appendCut = [&cutString, &first](std::string str) {
       if (str.size() > 0) {
-        cutString += "," + str;
+        if (first) {
+          cutString += str;
+          first = false;
+        } else {
+          cutString += "," + str;
+        }
       }
     };
     appendCut(trcksel.mNClustersTPC);
@@ -111,6 +119,7 @@ TrackSelectionFilterAndAnalysis::TrackSelectionFilterAndAnalysis(const TrackSele
     appendCut(trcksel.mEtaRange);
   }
   cutString += "}";
+  ConstructCutFromString(cutString);
 }
 
 /// \brief Calculates the length of the mask needed to store the selection cuts
@@ -173,13 +182,14 @@ void TrackSelectionFilterAndAnalysis::SetEtaRange(const TString& regex)
 
 void TrackSelectionFilterAndAnalysis::ConstructCutFromString(const TString& cutstr)
 {
+  LOGF(info, "Cut string: %s", cutstr.Data());
   /* let's catch the first level */
-  regex cutregex("^tracksel\\{ttype\\{([\\w\\d,]+)};?(\\w+\\{[\\w\\d.,;{}]+})*}$", regex_constants::ECMAScript | regex_constants::icase);
+  regex cutregex("^tracksel\\{ttype\\{([\\w\\d,]+)};?(\\w+\\{[\\w\\d.,:{}-]+})*}$", regex_constants::ECMAScript | regex_constants::icase);
   std::string in(cutstr.Data());
   smatch m;
 
-  regex_search(in, m, cutregex);
-  if (m.empty() or (m.size() > 3)) {
+  bool res = regex_search(in, m, cutregex);
+  if (not res or m.empty() or (m.size() > 3)) {
     Fatal("TrackSelectionFilterAndAnalysis::::ConstructCutFromString", "Wrong RE: %s, try tracksel{ttype{FB32,FB96};ncls{th{70}},nxr{cwv{th{70},th{80}}}} for instance", cutstr.Data());
   }
   SetName("TrackSelectionFilterAndAnalysisCuts");
@@ -188,8 +198,8 @@ void TrackSelectionFilterAndAnalysis::ConstructCutFromString(const TString& cuts
   /* let's split the handling of track types and of its characteristics */
   /* let's handle the track types */
   {
-    TObjArray* lev2toks = TString(m[1].str()).Tokenize(",");
     LOGF(info, "Captured %s", m[1].str().c_str());
+    TObjArray* lev2toks = TString(m[1].str()).Tokenize(",");
     for (int i = 0; i < lev2toks->GetEntries(); ++i) {
       mTrackTypes.Add(new TrackSelectionBrick(lev2toks->At(i)->GetName()));
     }
@@ -197,6 +207,7 @@ void TrackSelectionFilterAndAnalysis::ConstructCutFromString(const TString& cuts
   }
   /* let's now handle the reco track characteristics */
   {
+    LOGF(info, "Captured %s", m[2].str().c_str());
     TString lev2str = m[2].str();
     while (lev2str.Length() != 0) {
       std::set<std::string> allowed = {"lim", "th", "rg", "xrg", "cwv"};
@@ -209,9 +220,9 @@ void TrackSelectionFilterAndAnalysis::ConstructCutFromString(const TString& cuts
       regex cutregex("^(\\w+)\\{((?:[^{}]++|\\{(?2)\\})*)\\}");
       std::string in(lev2str.Data());
       smatch m;
-      regex_search(in, m, cutregex);
+      bool res = regex_search(in, m, cutregex);
 
-      if (m.empty() or (m.size() != 3)) {
+      if (not res or m.empty() or (m.size() != 3)) {
         Fatal("TrackSelectionFilterAndAnalysis::::ConstructCutFromString", "Wrong RE: %s, try tracksel{ttype{FB32,FB96};nclstpc{th{70}},nxr{cwv{th{70},th{80}}}} for instance", cutstr.Data());
       }
       LOGF(info, "Captured %s", m[1].str().c_str());
