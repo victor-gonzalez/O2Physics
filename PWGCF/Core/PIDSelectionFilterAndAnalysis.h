@@ -58,12 +58,6 @@ class PIDSelectionFilterAndAnalysis : public SelectionFilterAndAnalysis
 template <typename TrackToFilter>
 uint64_t PIDSelectionFilterAndAnalysis::Filter(TrackToFilter const& track)
 {
-  /* limit for the current implementation */
-  int length = CalculateMaskLength();
-  if (length > 64) {
-    LOGF(fatal, "PIDSelectionFilterAndAnalysis not ready for filter mask of %d bits. Just 64 available for the time being");
-  }
-
   uint64_t selectedMask = 0UL;
   int bit = 0;
 

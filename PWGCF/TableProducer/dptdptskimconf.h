@@ -16,6 +16,7 @@
 
 struct : ConfigurableGroup {
   Configurable<std::string> zvtxsel{"evtflt_zvtx", "zvtx{cwv{rg{-7.0,7.0}:rg{-10.0,10.0}-no,rg{-3.0,3.0}-no}}", "Z vertex cut: zvtx{rg{-7.0,7.0}} or zvtx{cwv{def:var1,var2@,..}}"};
+  Configurable<std::string> centmultsel{"evtflt_centmult", "centmult{cwv{mrg{V0M,0,5,10,20,30,40,50,60,70,80}-yes:mrg{CL1,0,5,10,20,30,40,50,60,70,80}-no}}", "Centrality/Multiplicity cut: centmult{mrg{V0M,0,5,10,20,30,40,50,60,70,80}}"};
 } eventfilter;
 
 struct : ConfigurableGroup {

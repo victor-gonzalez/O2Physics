@@ -329,6 +329,8 @@ class CutWithVariations : public CutBrick<TValueToFilter>
 
   bool AddDefaultBrick(CutBrick<TValueToFilter>* brick);
   bool AddVariationBrick(CutBrick<TValueToFilter>* brick);
+  TList& getDefaultBricks() { return mDefaultBricks; }
+  TList& getVariantBricks() { return mVariationBricks; }
   virtual std::vector<bool> Filter(const TValueToFilter&);
   virtual int Length();
 

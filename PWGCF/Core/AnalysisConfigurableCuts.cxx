@@ -483,19 +483,17 @@ void CutBrickSelectorMultipleRanges<TValueToFilter>::ConstructCutFromString(cons
 {
   LOGF(info, "Cut string: %s", cutstr.Data());
 
-  std::regex cutregex("^(\\w+)\\{mrg\\{((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))((?:,((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))){2,})}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
+  std::regex cutregex("^(\\w+)\\{mrg\\{([a-zA-Z]\\w+)((?:,((?:-?[\\d]+\\.?[\\d]*)|(?:-?[\\d]*\\.?[\\d]+))){2,})}}$", std::regex_constants::ECMAScript | std::regex_constants::icase);
   std::string in(cutstr.Data());
   std::smatch m;
 
-  std::regex_search(in, m, cutregex);
-  if (m.empty() or (m.size() < 5)) {
-    Fatal("CutBrickSelectorMultipleRanges<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, use V0M{mrg{0,5,10,20,30,40,50,60,70,80}} for instance", cutstr.Data());
+  bool res = std::regex_search(in, m, cutregex);
+  if (not res or m.empty() or (m.size() < 5)) {
+    Fatal("CutBrickSelectorMultipleRanges<TValueToFilter>::ConstructCutFromString", "Wrong RE: %s, use centmult{mrg{V0M,0,5,10,20,30,40,50,60,70,80}} for instance", cutstr.Data());
   } else {
-    this->SetName(m[1].str().c_str());
+    this->SetName(m[2].str().c_str());
     this->SetTitle(cutstr.Data());
-    /* the first edge on the list */
-    mEdges.push_back(TValueToFilter(std::stod(m[2])));
-    /* this now is a bit tricky due to the nature of the groups repetition within RE */
+    /* list of edges */
     TObjArray* tokens = TString(m[3]).Tokenize(",");
     for (int i = 0; i < tokens->GetEntries(); ++i) {
       mEdges.push_back(TValueToFilter(TString(tokens->At(i)->GetName()).Atof()));
@@ -515,12 +513,18 @@ std::vector<bool> CutBrickSelectorMultipleRanges<TValueToFilter>::Filter(const T
 {
   if ((mEdges.front() <= value) and (value < mEdges.back())) {
     this->mState = this->kACTIVE;
+    unsigned int last = mActive.size();
     for (unsigned int i = 0; i < mActive.size(); ++i) {
       if (value < mEdges[i + 1]) {
         mActive[i] = true;
+        last = i;
+        break;
       } else {
         mActive[i] = false;
       }
+    }
+    for (unsigned int i = last + 1; i < mActive.size(); ++i) {
+      mActive[i] = false;
     }
   } else {
     this->mState = this->kPASSIVE;
@@ -540,10 +544,10 @@ template class o2::analysis::PWGCF::CutBrickSelectorMultipleRanges<float>;
 template <typename TValueToFilter>
 CutWithVariations<TValueToFilter>::CutWithVariations()
   : CutBrick<TValueToFilter>(),
-    mAllowSeveralDefaults(false)
+    mAllowSeveralDefaults(false),
+    mDefaultBricks{},
+    mVariationBricks{}
 {
-  mDefaultBricks.SetOwner(true);
-  mVariationBricks.SetOwner(true);
 }
 
 /// Named constructor
@@ -553,10 +557,10 @@ CutWithVariations<TValueToFilter>::CutWithVariations()
 template <typename TValueToFilter>
 CutWithVariations<TValueToFilter>::CutWithVariations(const char* name, const char* cutstr, bool severaldefaults)
   : CutBrick<TValueToFilter>(name, cutstr),
-    mAllowSeveralDefaults(severaldefaults)
+    mAllowSeveralDefaults(severaldefaults),
+    mDefaultBricks{},
+    mVariationBricks{}
 {
-  mDefaultBricks.SetOwner(true);
-  mVariationBricks.SetOwner(true);
 }
 
 /// \brief Cut string constructor
@@ -564,11 +568,10 @@ CutWithVariations<TValueToFilter>::CutWithVariations(const char* name, const cha
 template <typename TValueToFilter>
 CutWithVariations<TValueToFilter>::CutWithVariations(const TString& cutstr)
   : CutBrick<TValueToFilter>(),
-    mAllowSeveralDefaults(false)
+    mAllowSeveralDefaults(false),
+    mDefaultBricks{},
+    mVariationBricks{}
 {
-  mDefaultBricks.SetOwner(true);
-  mVariationBricks.SetOwner(true);
-
   ConstructCutFromString(cutstr);
 }
 
@@ -604,7 +607,7 @@ void CutWithVariations<TValueToFilter>::ConstructCutFromString(const TString& cu
   auto addCuts = [&](TList& cutlist, std::string cuttxt, bool reqflag) {
     std::smatch m;
     while (cuttxt.length() > 0) {
-      std::set<std::string> allowed = {"lim", "th", "rg", "xrg"};
+      std::set<std::string> allowed = {"lim", "th", "rg", "xrg", "mrg"};
       std::regex cutregex("(\\w+\\{[\\w.,-]+}(?:-(?:no|yes))*)");
       bool res = regex_search(cuttxt, m, cutregex);
       if (not res or m.empty() or m.size() != 2) {
@@ -891,7 +894,7 @@ PIDSelectionBrick::PIDSelectionBrick(const TString& regex) : SpecialCutBrick(reg
 /// \param regex The brick regular expression
 /// Regular expression has to be of the shape
 /// {sp{tpc{cwv{rg{-2.0,2.0};rg{-3.0,3.0}};sp1{cwv{xrg{-2.0,2.0};xrg{-3.0,3.0}}}}}{tof ...}}
-void PIDSelectionBrick::ConstructFromString(const TString& regex)
+void PIDSelectionBrick::ConstructFromString(const TString&)
 {
 }
 

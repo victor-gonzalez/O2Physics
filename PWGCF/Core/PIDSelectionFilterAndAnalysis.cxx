@@ -65,4 +65,7 @@ int PIDSelectionFilterAndAnalysis::CalculateMaskLength()
 void PIDSelectionFilterAndAnalysis::ConstructCutFromString(const TString& cutstr)
 {
   mMaskLength = CalculateMaskLength();
+  if (mMaskLength > 64) {
+    LOGF(fatal, "PIDSelectionFilterAndAnalysis not ready for filter mask of %d bits. Just 64 available for the time being", mMaskLength);
+  }
 }
