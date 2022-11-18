@@ -66,4 +66,3 @@ struct : o2::framework::ConfigurableGroup {
   o2::framework::Configurable<std::string> ccdbpath{"ccdbpath", "Users/v/victor/Skimming", "url of the skimming ccdb repository"};
   o2::framework::Configurable<std::string> filterdate{"filterdate", "20221115", "the date for the skimming production with the current filter configuration"};
 } filterccdb;
-
